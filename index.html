@@ -1,0 +1,1382 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Побег из лаборатории</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Unbounded:wght@500;700;900&display=swap">
+<style>
+/* Layout: игровая оболочка — липкая панель HUD сверху и одна сцена под ней, которая меняет экраны (заставка, карта, отсек, финал).
+   Единый тёмный «лабораторный» вид выбран намеренно: бирюзовый = ИСТИНА (1), коралловый = ЛОЖЬ (0), жёлтый = управление, красный = тревога. */
+:root{
+  --ink:#0a1120;      /* фон станции */
+  --hull:#111b2d;     /* панели */
+  --hull-2:#18243a;   /* кнопки, вложенные панели */
+  --seam:#28385a;     /* швы и рамки */
+  --text:#e4ecf7;
+  --dim:#8d9db9;
+  --true:#36e2c4;     /* 1 — истина */
+  --false:#ff8b5e;    /* 0 — ложь */
+  --signal:#ffd23f;   /* управление, энергия, звёзды */
+  --alarm:#ff4a5d;    /* тревога */
+  --f-display:'Unbounded','Arial Black',system-ui,sans-serif;
+  --f-body:'Golos Text',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{
+  margin:0;background-color:var(--ink);color:var(--text);
+  font:16px/1.55 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  background-image:
+    linear-gradient(color-mix(in srgb,var(--seam) 30%,transparent) 1px,transparent 1px),
+    linear-gradient(90deg,color-mix(in srgb,var(--seam) 30%,transparent) 1px,transparent 1px);
+  background-size:36px 36px;background-attachment:fixed;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--ink)}
+#app{max-width:1120px;margin:0 auto;padding-block:14px 56px;display:flex;flex-direction:column;gap:18px}
+button{font:inherit;color:inherit;cursor:pointer}
+input,textarea{font:inherit;color:var(--text);background:var(--ink);border:2px solid var(--seam);border-radius:10px;padding:12px 14px;width:100%}
+input:focus,textarea:focus{border-color:var(--signal);outline:none}
+:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15;font-weight:700}
+h2{font-size:clamp(22px,3.2vw,30px)}
+h3{font-size:18px}
+p{margin:0}
+blockquote{margin:6px 0 0;padding:12px 16px;border-left:4px solid var(--signal);background:var(--ink);border-radius:0 10px 10px 0;font-size:18px}
+.mono{font-family:var(--f-mono)}
+.dim{color:var(--dim)}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.stack{display:flex;flex-direction:column;gap:14px}
+.panel{background:var(--hull);border:1px solid var(--seam);border-radius:16px;padding:20px;min-width:0}
+.hazard{height:10px;border-radius:3px;background:repeating-linear-gradient(-45deg,var(--signal) 0 12px,var(--ink) 12px 24px)}
+
+/* кнопки */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 18px;border-radius:10px;border:2px solid var(--seam);background:var(--hull-2);font-weight:600;line-height:1.2;transition:transform .08s,border-color .15s,background-color .15s;text-align:center}
+.btn:hover{border-color:var(--signal)}
+.btn:active{transform:translateY(2px)}
+.btn.primary{background:var(--signal);color:var(--ink);border-color:var(--signal)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.small{padding:8px 12px;font-size:14px}
+.btn[disabled]{opacity:.4;cursor:not-allowed;transform:none}
+.icon-btn{width:42px;height:42px;border-radius:10px;border:1px solid var(--seam);background:var(--hull-2);display:grid;place-items:center;font-family:var(--f-mono);font-weight:700}
+.icon-btn:hover{border-color:var(--signal)}
+
+/* биты и выражения */
+.bit{display:inline-grid;place-items:center;min-width:1.55em;height:1.55em;padding:0 .3em;border-radius:6px;font-family:var(--f-mono);font-weight:700;font-size:.92em;line-height:1;vertical-align:baseline}
+.bit.b1{background:color-mix(in srgb,var(--true) 18%,transparent);color:var(--true)}
+.bit.b0{background:color-mix(in srgb,var(--false) 18%,transparent);color:var(--false)}
+.bit.bq{background:var(--hull-2);color:var(--dim)}
+.expr{font-family:var(--f-mono);font-weight:700;padding:1px 8px;border-radius:6px;background:var(--ink);border:1px solid var(--seam);display:inline-block;line-height:1.6}
+.expr .op{color:var(--signal);font-weight:700}
+.expr .var{font-style:normal;color:var(--text)}
+.op-name{color:var(--signal);font-family:var(--f-mono);font-weight:700}
+
+/* HUD */
+#hud{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:10px 14px;background:color-mix(in srgb,var(--hull) 94%,transparent);border:1px solid var(--seam);border-radius:14px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;backdrop-filter:blur(6px)}
+.hud-who{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.hud-who .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.hud-who .rk{font-size:12px;color:var(--signal);font-family:var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+.stat{display:flex;flex-direction:column;line-height:1.15;min-width:52px}
+.stat b{font-family:var(--f-mono);font-size:18px;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.stat.combo b{color:var(--signal)}
+.hud-btns{display:flex;gap:8px}
+@media (max-width:640px){
+  #hud{gap:8px 12px}
+  .hud-who svg{display:none}
+  .stat b{font-size:16px}
+  .hud-who{flex-basis:100%}
+  .stat{min-width:0}
+  .stat.st-stars{display:none}
+  .hud-btns{margin-left:auto}
+  .icon-btn{width:38px;height:38px}
+}
+
+/* заставка */
+.title{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:center;padding-block:28px}
+.logo{font-family:var(--f-display);font-weight:900;font-size:clamp(34px,6.4vw,70px);line-height:1;letter-spacing:-.01em;text-transform:uppercase}
+.logo span{display:block}
+.logo .l2{color:var(--signal)}
+.title-art{display:grid;place-items:center;position:relative;padding:24px}
+.title-art .glow{position:absolute;inset:10%;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--true) 22%,transparent),transparent 65%)}
+.title-art .float{position:relative;width:min(260px,70%)}
+.title-art .robot{width:100%;height:auto}
+.rules-mini{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rules-mini div{padding:12px;border:1px solid var(--seam);border-radius:12px;background:var(--hull);font-size:14px}
+.rules-mini b{display:block;font-family:var(--f-mono);color:var(--signal);font-size:20px}
+.form2{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.form2 label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--dim)}
+.confirm{padding:14px;border:1px solid var(--alarm);border-radius:12px;background:color-mix(in srgb,var(--alarm) 8%,var(--hull))}
+@media (max-width:760px){.title{grid-template-columns:1fr}.title-art{order:-1;padding:0}.title-art .float{width:150px}.rules-mini{grid-template-columns:1fr}.form2{grid-template-columns:1fr}}
+
+/* робот */
+.robot{display:block}
+.robot .ant{animation:blink 1.6s steps(1) infinite}
+.robot.alarm .ant{animation-duration:.4s}
+.float{animation:float 3.2s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px)}}
+@keyframes blink{50%{opacity:.25}}
+
+/* диалог */
+.dialog{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:end;max-width:860px;margin:0 auto;width:100%;padding-block:24px}
+.speaker{width:120px;display:grid;place-items:center}
+.bubble{position:relative;padding:22px;border-radius:16px;background:var(--hull);border:2px solid var(--seam);min-height:150px;display:flex;flex-direction:column;gap:12px;cursor:pointer}
+.bubble.sys{border-color:var(--alarm)}
+.bubble.logos{border-color:var(--true)}
+.bubble .who{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.bubble.sys .who{color:var(--alarm)} .bubble.logos .who{color:var(--true)} .bubble.bit .who{color:var(--signal)}
+.bubble .txt{font-size:19px;min-height:3em}
+.logos-core{width:110px;height:110px;border-radius:50%;border:3px solid var(--true);display:grid;place-items:center;font-family:var(--f-mono);font-weight:700;color:var(--true);box-shadow:0 0 30px color-mix(in srgb,var(--true) 40%,transparent),inset 0 0 30px color-mix(in srgb,var(--true) 25%,transparent);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 10px color-mix(in srgb,var(--true) 30%,transparent),inset 0 0 14px color-mix(in srgb,var(--true) 15%,transparent)}}
+@media (max-width:600px){.dialog{grid-template-columns:1fr}.speaker{width:auto}.logos-core{width:76px;height:76px}}
+
+/* карта */
+.map-head{display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:space-between}
+.progress{height:12px;border-radius:999px;background:var(--hull-2);border:1px solid var(--seam);overflow:hidden;min-width:180px;flex:1}
+.progress i{display:block;height:100%;background:var(--true);border-radius:999px;transition:width .6s}
+.progress.rank i{background:var(--signal)}
+.map{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;counter-reset:none}
+.node{position:relative;text-align:left;padding:16px;border-radius:14px;border:2px solid var(--seam);background:var(--hull);display:flex;flex-direction:column;gap:8px;min-height:168px;transition:transform .12s,border-color .15s}
+.node:not(.locked):hover{transform:translateY(-3px)}
+.node .code{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;color:var(--dim)}
+.node h3{font-size:17px}
+.node .sub{font-size:14px;color:var(--dim)}
+.node .foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.chip{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:1px solid var(--seam);white-space:nowrap}
+.node.avail{border-color:var(--signal);box-shadow:0 0 0 4px color-mix(in srgb,var(--signal) 14%,transparent)}
+.node.avail .chip{color:var(--ink);background:var(--signal);border-color:var(--signal)}
+.node.done{border-color:color-mix(in srgb,var(--true) 55%,var(--seam))}
+.node.done .chip{color:var(--true);border-color:var(--true)}
+.node.locked{opacity:.5;cursor:not-allowed}
+.node.boss{background:linear-gradient(160deg,color-mix(in srgb,var(--alarm) 10%,var(--hull)),var(--hull))}
+.node .here{position:absolute;right:10px;top:-34px;width:46px}
+.stars{display:inline-flex;gap:2px;vertical-align:middle}
+.star path{fill:var(--seam)} .star.on path{fill:var(--signal)}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.ach{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;border:1px solid var(--seam);background:var(--hull-2);font-size:13px;min-width:0}
+.ach .ic{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--ink);border:1px solid var(--seam);font-family:var(--f-mono);font-weight:700;color:var(--dim)}
+.ach b{display:block;font-size:14px}
+.ach.got{border-color:var(--signal)}
+.ach.got .ic{background:var(--signal);color:var(--ink);border-color:var(--signal)}
+.ach:not(.got){opacity:.6}
+@media (max-width:820px){.map{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:500px){.map{grid-template-columns:1fr}.node{min-height:0}}
+
+/* отсек */
+.sec-head{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.stepper{display:flex;gap:6px;flex-wrap:wrap}
+.stepper button{padding:8px 14px;border-radius:999px;border:1px solid var(--seam);background:var(--hull);font-family:var(--f-mono);font-size:13px}
+.stepper button:hover{border-color:var(--signal)}
+.stepper .cur{background:var(--signal);color:var(--ink);border-color:var(--signal)}
+.stepper .done-step::before{content:"✓ ";color:var(--true)}
+.practice{font-family:var(--f-mono);font-size:12px;color:var(--true);border:1px dashed var(--true);padding:4px 10px;border-radius:999px}
+.terminal{background:var(--ink);border:1px solid var(--seam);border-radius:16px;overflow:hidden}
+.terminal-bar{display:flex;gap:10px;align-items:center;padding:9px 16px;background:var(--hull-2);font-family:var(--f-mono);font-size:12px;color:var(--dim);border-bottom:1px solid var(--seam)}
+.terminal-bar i{width:10px;height:10px;border-radius:50%;background:var(--seam);display:inline-block}
+.terminal-bar i:first-child{background:var(--alarm)}
+.terminal-body{padding:22px;display:flex;flex-direction:column;gap:16px}
+.terminal-body > *{max-width:72ch}
+.terminal-body .wide{max-width:none}
+.rule{padding:12px 16px;border-radius:10px;border:1px solid var(--signal);background:color-mix(in srgb,var(--signal) 7%,transparent)}
+.cols2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cols2 > div{padding:14px;border-radius:12px;border:1px solid var(--seam);background:var(--hull);min-width:0}
+.cols2 h3{font-size:14px;margin-bottom:6px}
+.cols2 ul{margin:0;padding-left:18px}
+.life{padding:12px 16px;border-left:4px solid var(--true);background:var(--hull);border-radius:0 10px 10px 0}
+.notation{display:flex;flex-wrap:wrap;gap:8px}
+.notation span{font-family:var(--f-mono);padding:4px 10px;border:1px solid var(--seam);border-radius:8px;background:var(--hull)}
+@media (max-width:640px){.cols2{grid-template-columns:1fr}.terminal-body{padding:16px}}
+
+/* таблицы истинности */
+.tt-wrap{overflow-x:auto;max-width:100%}
+.tt{border-collapse:collapse;font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.tt th,.tt td{border:1px solid var(--seam);padding:6px 12px;text-align:center;white-space:nowrap}
+.tt th{background:var(--hull-2);font-size:13px}
+.tt th .expr{background:transparent;border:0;padding:0}
+.tt th.fin{background:color-mix(in srgb,var(--signal) 14%,var(--hull-2))}
+.tt tr.cur td{background:color-mix(in srgb,var(--signal) 12%,transparent)}
+.tt td.ok{color:var(--true)}
+
+/* симулятор */
+.sim{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.sim-out{display:flex;align-items:center;gap:18px;padding:18px;border-radius:14px;border:1px solid var(--seam);background:var(--ink)}
+.biglamp{flex:none;width:84px;height:84px;border-radius:50%;background:var(--hull-2);border:4px solid var(--seam);transition:background-color .2s,box-shadow .2s,border-color .2s;position:relative}
+.biglamp::after{content:"";position:absolute;inset:18%;border-radius:50%;border:3px dashed color-mix(in srgb,var(--seam) 80%,transparent)}
+.biglamp.on{background:var(--true);border-color:var(--true);box-shadow:0 0 40px var(--true),0 0 90px color-mix(in srgb,var(--true) 40%,transparent)}
+.biglamp.on::after{border-color:color-mix(in srgb,var(--ink) 30%,transparent)}
+.switches{display:flex;gap:12px;flex-wrap:wrap}
+.sw{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 14px;border-radius:12px;border:2px solid var(--seam);background:var(--hull-2);min-width:84px;max-width:170px}
+.sw:hover{border-color:var(--signal)}
+.sw .vn{font-family:var(--f-mono);font-weight:700;font-size:20px}
+.sw .lg{font-size:12px;color:var(--dim);text-align:center;line-height:1.3}
+.knob{width:52px;height:28px;border-radius:999px;background:var(--ink);border:2px solid var(--seam);position:relative}
+.knob::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--false);transition:left .15s}
+.sw.on .knob::after{left:27px;background:var(--true)}
+.sw[disabled]{opacity:.6;cursor:default}
+.scan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.scan{text-align:left;padding:14px;border-radius:12px;border:2px dashed var(--seam);background:var(--hull-2);display:flex;flex-direction:column;gap:8px;min-height:120px}
+.scan:hover{border-color:var(--signal)}
+.scan .s{font-size:17px}
+.scan .res{margin-top:auto;font-family:var(--f-mono);font-size:12px;letter-spacing:.06em}
+.scan.rev{border-style:solid;cursor:default}
+.scan.kT{border-color:var(--true)} .scan.kT .res{color:var(--true)}
+.scan.kF{border-color:var(--false)} .scan.kF .res{color:var(--false)}
+.scan.kN{border-color:var(--dim)} .scan.kN .res{color:var(--dim)}
+.scan .why{font-size:13px;color:var(--dim)}
+.explore{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+@media (max-width:820px){.sim{grid-template-columns:1fr}}
+
+/* дверь */
+.door-layout{display:grid;grid-template-columns:minmax(250px,340px) minmax(0,1fr);gap:18px;align-items:start}
+.door-box{display:flex;flex-direction:column;gap:14px;position:sticky;top:96px}
+.door{position:relative;aspect-ratio:3/3.6;width:100%;max-width:100%;border-radius:14px;background:var(--ink);border:3px solid var(--seam);overflow:hidden}
+.door-beyond{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 60%,color-mix(in srgb,var(--true) 35%,var(--ink)),var(--ink) 70%)}
+.door-beyond .robot{width:34%;transition:transform 1.6s ease-in .5s}
+.door.open .door-beyond .robot{transform:translateY(-6%) scale(.55);opacity:.85}
+.leaf{position:absolute;top:0;bottom:0;width:50%;background:linear-gradient(180deg,var(--hull-2),var(--hull));transition:transform 1.2s cubic-bezier(.7,0,.3,1);z-index:1}
+.leaf.l{left:0;border-right:2px solid var(--ink)}
+.leaf.r{right:0;border-left:2px solid var(--seam)}
+.leaf::before{content:"";position:absolute;left:0;right:0;top:58%;height:9%;background:repeating-linear-gradient(-45deg,var(--signal) 0 10px,var(--ink) 10px 20px);opacity:.85}
+.leaf::after{content:"";position:absolute;left:14%;right:14%;top:12%;height:30%;border:2px solid var(--seam);border-radius:8px}
+.door.open .leaf.l{transform:translateX(-102%)}
+.door.open .leaf.r{transform:translateX(102%)}
+.door-sign{position:absolute;z-index:2;bottom:10px;left:0;right:0;text-align:center;font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;color:var(--dim)}
+.locks{display:flex;gap:10px;justify-content:center;position:absolute;top:14%;left:0;right:0;z-index:2}
+.lock{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--ink);border:3px solid var(--seam);font-family:var(--f-mono);font-weight:700;color:var(--dim);transition:all .3s}
+.lock.cur{border-color:var(--signal);color:var(--signal);animation:blink 1.2s steps(1) infinite}
+.lock.on{border-color:var(--true);color:var(--ink);background:var(--true);box-shadow:0 0 18px var(--true);animation:none}
+.door.open .locks{opacity:0;transition:opacity .3s}
+.energy{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px 14px;border-radius:12px;border:1px solid var(--seam);background:var(--hull)}
+.cells{display:flex;gap:4px;padding:4px;border:2px solid var(--seam);border-radius:8px;position:relative}
+.cells::after{content:"";position:absolute;right:-7px;top:30%;width:4px;height:40%;background:var(--seam);border-radius:0 2px 2px 0}
+.cell{width:30px;height:18px;border-radius:3px;background:var(--signal);transition:background-color .3s}
+.cell.off{background:var(--hull-2)}
+.energy.low .cell:not(.off){background:var(--alarm);animation:blink .8s steps(1) infinite}
+.virus{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--alarm);border-radius:12px;background:color-mix(in srgb,var(--alarm) 9%,var(--hull))}
+.virus-ico{flex:none;animation:glitch 2.4s infinite}
+.virus .say{font-family:var(--f-mono);font-size:13px;color:var(--alarm);min-height:1.4em}
+.hp{display:flex;gap:4px;margin-top:6px}
+.hp i{width:42px;height:10px;background:var(--alarm);border-radius:3px;transition:background-color .3s}
+.hp i.gone{background:var(--hull-2)}
+@keyframes glitch{0%,88%,100%{transform:none}90%{transform:translate(3px,-2px) skewX(8deg)}93%{transform:translate(-3px,1px)}96%{transform:translate(2px,2px) skewX(-6deg)}}
+@media (max-width:820px){
+  .door-layout{grid-template-columns:1fr}
+  .door-box{position:static;display:grid;grid-template-columns:120px 1fr;align-items:center}
+  .door{aspect-ratio:3/3.8}
+  .door .lock{width:26px;height:26px;font-size:12px;border-width:2px}
+  .door .locks{gap:4px}
+  .door-sign{display:none}
+  .door-box .virus{grid-column:1/-1}
+}
+
+/* задание */
+.task{display:flex;flex-direction:column;gap:16px}
+.task-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.tag{font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;padding:4px 10px;border-radius:999px;background:var(--hull-2);border:1px solid var(--seam);color:var(--signal)}
+.q{font-size:18px;line-height:1.6}
+.tf{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tf .btn{padding:18px 10px;font-size:18px;font-family:var(--f-display);font-weight:700}
+.tf .t1{border-color:var(--true);color:var(--true)}
+.tf .t0{border-color:var(--false);color:var(--false)}
+.tf .t1:hover{background:color-mix(in srgb,var(--true) 12%,var(--hull-2))}
+.tf .t0:hover{background:color-mix(in srgb,var(--false) 12%,var(--hull-2))}
+.opts{display:grid;gap:10px}
+.opt{display:flex;gap:12px;align-items:center;text-align:left;padding:14px 16px;border-radius:12px;border:2px solid var(--seam);background:var(--hull-2);font-size:16px}
+.opt:hover{border-color:var(--signal)}
+.opt .k{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--ink);font-family:var(--f-mono);font-weight:700;color:var(--signal)}
+.opt.right{border-color:var(--true);background:color-mix(in srgb,var(--true) 12%,var(--hull-2))}
+.opt[disabled]{cursor:default}
+.lamps{display:grid;gap:10px}
+.lamp-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--seam);border-radius:12px;background:var(--hull-2);flex-wrap:wrap}
+.lampdot{flex:none;width:30px;height:30px;border-radius:50%;background:var(--ink);border:2px solid var(--seam);display:grid;place-items:center;font-family:var(--f-mono);font-size:13px;color:var(--dim);transition:all .25s}
+.lampdot.on{background:var(--true);border-color:var(--true);box-shadow:0 0 16px var(--true);color:var(--ink)}
+.lampdot.off{background:var(--hull);border-color:var(--false);color:var(--false)}
+.target{margin-left:auto;font-size:13px;font-family:var(--f-mono);letter-spacing:.04em}
+.target.t1{color:var(--true)} .target.t0{color:var(--false)}
+.lamp-row.miss{box-shadow:0 0 0 2px var(--alarm)}
+.cellbtn{width:46px;height:36px;border-radius:8px;border:2px dashed var(--seam);background:var(--hull-2);font-family:var(--f-mono);font-weight:700;color:var(--dim)}
+.cellbtn:hover{border-color:var(--signal)}
+.cellbtn.v1{border-style:solid;color:var(--true);border-color:var(--true)}
+.cellbtn.v0{border-style:solid;color:var(--false);border-color:var(--false)}
+.cellbtn.err{box-shadow:0 0 0 3px var(--alarm)}
+.task-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.task-foot .sp{flex:1}
+.feedback{padding:14px 16px;border-radius:12px;border:1px solid var(--seam);display:flex;flex-direction:column;gap:8px}
+.feedback.ok{border-color:var(--true);background:color-mix(in srgb,var(--true) 9%,transparent)}
+.feedback.bad{border-color:var(--alarm);background:color-mix(in srgb,var(--alarm) 9%,transparent)}
+.feedback.hint{border-color:var(--signal);background:color-mix(in srgb,var(--signal) 7%,transparent)}
+.feedback .fh{font-family:var(--f-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.feedback.ok .fh{color:var(--true)} .feedback.bad .fh{color:var(--alarm)} .feedback.hint .fh{color:var(--signal)}
+.steps{margin:4px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:4px}
+.steps li{padding-left:4px}
+
+/* модальные окна, тосты, тревога */
+#modal{position:fixed;inset:0;background:color-mix(in srgb,var(--ink) 82%,transparent);display:grid;place-items:center;padding:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));z-index:60;backdrop-filter:blur(4px)}
+.modal-card{max-width:600px;width:100%;max-height:calc(100vh - 32px);overflow:auto;background:var(--hull);border:2px solid var(--seam);border-radius:18px;padding:24px;display:flex;flex-direction:column;gap:16px;animation:pop .25s ease-out}
+.modal-card.alarm{border-color:var(--alarm)}
+.modal-card.win{border-color:var(--true)}
+.modal-card.wide{max-width:860px}
+@keyframes pop{from{transform:scale(.94);opacity:0}}
+.big-stars{display:flex;gap:10px;justify-content:center}
+.big-stars .star{width:56px;height:56px}
+.big-stars .star.on{animation:starin .5s backwards}
+.big-stars .star.on:nth-child(2){animation-delay:.25s}
+.big-stars .star.on:nth-child(3){animation-delay:.5s}
+@keyframes starin{from{transform:scale(0) rotate(-90deg)}}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.kv div{padding:12px;border-radius:12px;border:1px solid var(--seam);background:var(--hull-2)}
+.kv b{display:block;font-family:var(--f-mono);font-size:22px;font-variant-numeric:tabular-nums}
+.kv span{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+#toasts{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:70;display:flex;flex-direction:column;gap:8px;max-width:min(340px,calc(100vw - 32px));pointer-events:none}
+.toast{padding:12px 14px;border-radius:12px;background:var(--hull-2);border:2px solid var(--signal);box-shadow:0 10px 30px color-mix(in srgb,var(--ink) 70%,transparent);animation:toast 4s forwards;font-size:14px}
+.toast b{display:block;font-family:var(--f-mono);font-size:12px;letter-spacing:.1em;color:var(--signal);text-transform:uppercase}
+@keyframes toast{0%{transform:translateY(20px);opacity:0}8%,85%{transform:none;opacity:1}100%{opacity:0;transform:translateY(-6px)}}
+#flash{position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 140px 50px var(--alarm);opacity:0;z-index:50}
+#flash.go{animation:alarmfx 1s ease-out}
+@keyframes alarmfx{0%{opacity:0}15%{opacity:1}35%{opacity:.25}55%{opacity:.9}100%{opacity:0}}
+.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+.pts{position:fixed;z-index:80;font-family:var(--f-display);font-weight:900;font-size:26px;pointer-events:none;animation:pts 1.2s ease-out forwards;text-shadow:0 2px 0 var(--ink)}
+.pts.plus{color:var(--true)} .pts.minus{color:var(--alarm)} .pts.bonus{color:var(--signal);font-size:20px}
+@keyframes pts{from{transform:translateY(0);opacity:1}to{transform:translateY(-70px);opacity:0}}
+
+/* финал и учитель */
+.finale{display:grid;grid-template-columns:.8fr 1.2fr;gap:24px;align-items:start}
+.code-box{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:14px;border-radius:12px;border:2px dashed var(--signal);background:var(--ink)}
+.code-box code{font-family:var(--f-mono);font-size:14px;word-break:break-all;flex:1;min-width:0;user-select:all}
+.sector-stars{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.sector-stars div{padding:8px 4px;text-align:center;border-radius:10px;background:var(--hull-2);border:1px solid var(--seam);font-family:var(--f-mono);font-size:12px;color:var(--dim)}
+.sector-stars .star{width:13px;height:13px}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:40;width:100%;height:100%}
+.result-card{display:flex;flex-direction:column;gap:12px}
+.result-card table{border-collapse:collapse;width:100%}
+.result-card td{padding:8px 10px;border-bottom:1px solid var(--seam)}
+.result-card td:first-child{color:var(--dim);width:45%}
+.err{color:var(--alarm)}
+.info-table{border-collapse:collapse;width:100%;font-size:14px}
+.info-table th,.info-table td{border:1px solid var(--seam);padding:8px 10px;text-align:left;vertical-align:top}
+.info-table th{background:var(--hull-2)}
+@media (max-width:820px){.finale{grid-template-columns:1fr}.sector-stars{grid-template-columns:repeat(3,1fr)}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header id="hud" hidden></header>
+  <main id="stage" aria-live="polite"></main>
+</div>
+<div id="modal" hidden><div class="modal-card" role="dialog" aria-modal="true"></div></div>
+<div id="toasts" aria-live="polite"></div>
+<div id="flash"></div>
+<canvas id="confetti" hidden></canvas>
+
+<script>
+'use strict';
+/* ============================================================
+   Побег из лаборатории — логический квест, информатика, 8 класс
+   ============================================================ */
+const SAVE_KEY = 'lab-escape-v1';
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const rnd = n => Math.floor(Math.random() * n);
+const pick = a => a[rnd(a.length)];
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+const fmtTime = s => { s = Math.max(0, s | 0); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; const p = n => String(n).padStart(2, '0'); return h ? `${h}:${p(m)}:${p(x)}` : `${p(m)}:${p(x)}`; };
+
+/* ---------- Звук (WebAudio, включается после первого касания) ---------- */
+const Snd = {
+  on: true, ctx: null,
+  init() { if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); },
+  tone(f, d = .12, type = 'square', vol = .05, delay = 0) {
+    if (!this.on || !this.ctx) return;
+    try {
+      const t = this.ctx.currentTime + delay, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = type; o.frequency.setValueAtTime(f, t);
+      g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + d);
+      o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t + d + .03);
+    } catch (e) {}
+  },
+  click() { this.tone(700, .04, 'square', .025); },
+  ok() { [523, 659, 784].forEach((f, i) => this.tone(f, .16, 'triangle', .07, i * .08)); },
+  bad() { this.tone(150, .35, 'sawtooth', .06); this.tone(105, .4, 'sawtooth', .05, .06); },
+  alarm() { for (let i = 0; i < 3; i++) { this.tone(880, .14, 'square', .035, i * .3); this.tone(600, .14, 'square', .035, i * .3 + .15); } },
+  door() { this.tone(80, 1.1, 'sawtooth', .05); this.tone(160, .8, 'triangle', .04, .25); this.tone(990, .2, 'triangle', .04, 1.1); },
+  bonus() { [880, 1175, 1397].forEach((f, i) => this.tone(f, .1, 'triangle', .05, i * .06)); },
+  win() { [523, 659, 784, 1046, 784, 1046, 1318].forEach((f, i) => this.tone(f, .22, 'triangle', .06, i * .13)); },
+};
+document.addEventListener('pointerdown', () => Snd.init(), { once: true });
+
+/* ---------- Логический движок: разбор и вычисление выражений ---------- */
+function tokenize(src) {
+  const toks = [], re = /\s*(ИЛИ|НЕ|И|\(|\)|[A-Z]|[01])/y;
+  re.lastIndex = 0;
+  while (re.lastIndex < src.length) {
+    const start = re.lastIndex, m = re.exec(src);
+    if (!m) { if (/^\s*$/.test(src.slice(start))) break; throw new Error('Не разобрать: ' + src); }
+    toks.push(m[1]);
+  }
+  return toks;
+}
+function parse(src) {
+  const t = tokenize(src); let i = 0;
+  const or = () => { let n = and(); while (t[i] === 'ИЛИ') { i++; n = { t: 'or', a: n, b: and() }; } return n; };
+  const and = () => { let n = not(); while (t[i] === 'И') { i++; n = { t: 'and', a: n, b: not() }; } return n; };
+  const not = () => { if (t[i] === 'НЕ') { i++; return { t: 'not', a: not() }; } return atom(); };
+  const atom = () => {
+    const x = t[i++];
+    if (x === '(') { const n = or(); if (t[i++] !== ')') throw new Error('Нет )'); n.p = true; return n; }
+    if (x === '0' || x === '1') return { t: 'c', v: +x };
+    if (/^[A-Z]$/.test(x)) return { t: 'v', n: x };
+    throw new Error('Лишний символ ' + x);
+  };
+  const n = or(); if (i < t.length) throw new Error('Хвост в ' + src); return n;
+}
+function fmt(n, top = false) {
+  let s;
+  if (n.t === 'v') s = n.n; else if (n.t === 'c') s = String(n.v);
+  else if (n.t === 'not') s = 'НЕ ' + fmt(n.a);
+  else s = fmt(n.a) + (n.t === 'and' ? ' И ' : ' ИЛИ ') + fmt(n.b);
+  return n.p && !top ? '(' + s + ')' : s;
+}
+const OPN = { not: 'НЕ', and: 'И', or: 'ИЛИ' };
+function run(src, env) {
+  const steps = [];
+  const ev = n => {
+    if (n.t === 'v') return env[n.n];
+    if (n.t === 'c') return n.v;
+    if (n.t === 'not') { const a = ev(n.a), r = a ? 0 : 1; steps.push({ text: fmt(n, true), op: 'НЕ', r, calc: `НЕ ${bit(a)} = ${bit(r)}` }); return r; }
+    const a = ev(n.a), b = ev(n.b), r = n.t === 'and' ? (a && b ? 1 : 0) : (a || b ? 1 : 0);
+    steps.push({ text: fmt(n, true), op: OPN[n.t], r, calc: `${bit(a)} ${OPN[n.t]} ${bit(b)} = ${bit(r)}` });
+    return r;
+  };
+  const v = ev(parse(src));
+  return { v, steps };
+}
+const value = (src, env) => run(src, env).v;
+const varsOf = src => [...new Set(tokenize(src).filter(x => /^[A-Z]$/.test(x)))].sort();
+const combos = vars => { const n = vars.length, out = []; for (let i = 0; i < (1 << n); i++) { const e = {}; vars.forEach((v, k) => e[v] = (i >> (n - 1 - k)) & 1); out.push(e); } return out; };
+const envKey = env => Object.keys(env).sort().map(k => k + env[k]).join('');
+const randEnv = vars => { const e = {}; vars.forEach(v => e[v] = rnd(2)); return e; };
+function stepCols(src) { const e = {}; varsOf(src).forEach(v => e[v] = 0); const seen = new Set(); return run(src, e).steps.map(s => s.text).filter(t => !seen.has(t) && seen.add(t)); }
+function rowVals(src, env) { const m = {}; run(src, env).steps.forEach(s => m[s.text] = s.r); return m; }
+
+/* ---------- HTML-помощники ---------- */
+const bit = v => v === null || v === undefined ? `<span class="bit bq">?</span>` : `<span class="bit b${v}">${v}</span>`;
+function exprHTML(src, wrap = true) {
+  const t = tokenize(src); let h = '';
+  t.forEach((x, i) => {
+    const sp = i > 0 && t[i - 1] !== '(' && x !== ')' ? ' ' : '';
+    h += sp + (x === 'НЕ' || x === 'И' || x === 'ИЛИ' ? `<b class="op">${x}</b>` : /^[A-Z]$/.test(x) ? `<i class="var">${x}</i>` : x === '0' || x === '1' ? bit(+x) : x);
+  });
+  return wrap ? `<span class="expr">${h}</span>` : h;
+}
+const envStr = env => Object.keys(env).sort().map(k => `<b class="mono">${k}</b> = ${bit(env[k])}`).join(', ');
+function stepsHTML(src, env) {
+  const { steps } = run(src, env);
+  return `<ol class="steps">${steps.map(s => `<li>${exprHTML(s.text)} : ${s.calc}</li>`).join('')}</ol>`;
+}
+function ttable(src, o = {}) {
+  const vars = varsOf(src), cols = stepCols(src), rows = combos(vars);
+  let h = `<div class="tt-wrap"><table class="tt"><thead><tr>${vars.map(v => `<th>${v}</th>`).join('')}${cols.map((c, i) => `<th class="${i === cols.length - 1 ? 'fin' : ''}">${exprHTML(c)}</th>`).join('')}${o.visited ? '<th>изучено</th>' : ''}</tr></thead><tbody>`;
+  rows.forEach(env => {
+    const k = envKey(env), vals = rowVals(src, env), seen = !o.visited || o.visited.has(k), cur = o.env && envKey(o.env) === k;
+    h += `<tr class="${cur ? 'cur' : ''}">${vars.map(v => `<td>${bit(env[v])}</td>`).join('')}${cols.map(c => `<td>${seen ? bit(vals[c]) : bit(null)}</td>`).join('')}${o.visited ? `<td class="${seen ? 'ok' : ''}">${seen ? '✓' : ''}</td>` : ''}</tr>`;
+  });
+  return h + '</tbody></table></div>';
+}
+const starSVG = on => `<svg viewBox="0 0 24 24" width="18" height="18" class="star ${on ? 'on' : ''}" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></svg>`;
+const starsHTML = (n, max = 3) => `<span class="stars" aria-label="${n} из ${max} звёзд">${Array.from({ length: max }, (_, i) => starSVG(i < n)).join('')}</span>`;
+function robot(mood = 'ok', w = 110) {
+  const eye = mood === 'alarm' ? 'var(--alarm)' : 'var(--true)';
+  const eyes = mood === 'happy'
+    ? `<path d="M40 58 q7 -10 14 0 M66 58 q7 -10 14 0" stroke="${eye}" stroke-width="4" fill="none" stroke-linecap="round"/>`
+    : `<rect x="40" y="47" width="14" height="13" rx="4" fill="${eye}"/><rect x="66" y="47" width="14" height="13" rx="4" fill="${eye}"/>`;
+  return `<svg class="robot ${mood}" viewBox="0 0 120 150" width="${w}" aria-hidden="true">
+  <line x1="60" y1="12" x2="60" y2="28" stroke="var(--dim)" stroke-width="3"/>
+  <circle class="ant" cx="60" cy="10" r="6" fill="${mood === 'alarm' ? 'var(--alarm)' : 'var(--signal)'}"/>
+  <rect x="13" y="44" width="11" height="22" rx="4" fill="var(--seam)"/><rect x="96" y="44" width="11" height="22" rx="4" fill="var(--seam)"/>
+  <rect x="22" y="28" width="76" height="56" rx="16" fill="var(--hull-2)" stroke="var(--seam)" stroke-width="3"/>
+  <rect x="32" y="38" width="56" height="34" rx="9" fill="var(--ink)"/>${eyes}
+  <rect x="36" y="90" width="48" height="36" rx="10" fill="var(--hull-2)" stroke="var(--seam)" stroke-width="3"/>
+  <text x="60" y="113" text-anchor="middle" font-family="JetBrains Mono, monospace" font-weight="700" font-size="11" fill="var(--signal)">БИТ-8</text>
+  <rect x="17" y="95" width="15" height="8" rx="4" fill="var(--seam)"/><rect x="88" y="95" width="15" height="8" rx="4" fill="var(--seam)"/>
+  <rect x="32" y="130" width="56" height="15" rx="7.5" fill="var(--seam)"/>
+  <circle cx="44" cy="137.5" r="4" fill="var(--hull)"/><circle cx="60" cy="137.5" r="4" fill="var(--hull)"/><circle cx="76" cy="137.5" r="4" fill="var(--hull)"/></svg>`;
+}
+const virusSVG = `<svg viewBox="0 0 80 80" width="58" height="58" class="virus-ico" aria-hidden="true"><path d="M40 4 L48 17 L63 11 L61 27 L76 34 L63 44 L71 59 L55 58 L50 75 L40 63 L29 75 L25 58 L9 60 L17 44 L4 34 L19 27 L17 11 L32 17 Z" fill="var(--alarm)"/><rect x="26" y="33" width="10" height="9" rx="2" fill="var(--ink)"/><rect x="45" y="33" width="10" height="9" rx="2" fill="var(--ink)"/><path d="M27 53 L33 48 L40 53 L47 48 L53 53" stroke="var(--ink)" stroke-width="3.5" fill="none" stroke-linejoin="round"/></svg>`;
+
+/* ---------- Конструкторы заданий ---------- */
+const KIND = { tf: 'ИСТИНА / ЛОЖЬ', choice: 'ВЫБОР ОТВЕТА', switch: 'ПУЛЬТ УПРАВЛЕНИЯ', table: 'ТАБЛИЦА ИСТИННОСТИ' };
+function tfValue(srcs, hint) {
+  const src = pick(srcs), env = randEnv(varsOf(src)), v = value(src, env), claim = rnd(2) ? v : 1 - v, ok = claim === v;
+  return {
+    type: 'tf', hint,
+    q: `Дано: ${envStr(env)}.<br>Верно ли, что ${exprHTML(src)} = ${bit(claim)}?`,
+    answer: ok,
+    explain: `Подставляем значения и считаем по порядку действий:${stepsHTML(src, env)}<p>Выражение равно ${bit(v)}, поэтому утверждение <b>${ok ? 'истинно' : 'ложно'}</b>.</p>`,
+  };
+}
+function choice(q, right, wrongs, hint, explain) {
+  const options = shuffle([right, ...wrongs]);
+  return { type: 'choice', q, options, answer: options.indexOf(right), hint, explain };
+}
+function switchTask(q, lamps, hint) {
+  const vars = [...new Set(lamps.flatMap(l => varsOf(l.src)))].sort();
+  const sat = env => lamps.every(l => value(l.src, env) === l.target);
+  const bad = combos(vars).filter(e => !sat(e));
+  return {
+    type: 'switch', q, lamps, vars, env: { ...pick(bad) }, sat, hint, shown: null,
+    explain: env => `<p>Твоя комбинация: ${envStr(env)}.</p>` + lamps.map(l => `<div>${exprHTML(l.src)}:${stepsHTML(l.src, env)}</div>`).join('') + `<p>Все лампы в нужном состоянии, значит, замок принимает код.</p>`,
+  };
+}
+function tableTask(src, hint) {
+  const vars = varsOf(src), cols = stepCols(src), rows = combos(vars);
+  return {
+    type: 'table', src, vars, cols, rows, hint,
+    fill: rows.map(() => cols.map(() => null)), errs: null,
+    q: `Заполни таблицу истинности для выражения ${exprHTML(src)}. Нажимай на клетку, чтобы поставить ${bit(1)} или ${bit(0)}.`,
+    explain: `<p>В таблице 2<sup>${vars.length}</sup> = ${rows.length} строки: столько разных наборов значений у ${vars.length === 2 ? 'двух' : 'трёх'} переменных. Столбцы заполняются в порядке действий: ${cols.map(c => exprHTML(c)).join(' → ')}.</p>${ttable(src)}`,
+  };
+}
+function solvableSwitch(pool, count, q, hint) {
+  for (let tries = 0; tries < 300; tries++) {
+    const lamps = shuffle(pool).slice(0, count).map(src => ({ src, target: rnd(2) }));
+    const vars = [...new Set(lamps.flatMap(l => varsOf(l.src)))].sort();
+    const n = combos(vars).filter(e => lamps.every(l => value(l.src, e) === l.target)).length;
+    if (n >= 1 && n <= 2) return switchTask(q, lamps, hint);
+  }
+  return switchTask(q, [{ src: 'A ИЛИ B', target: 1 }, { src: 'НЕ (A И B)', target: 1 }, { src: 'B И НЕ C', target: 1 }], hint);
+}
+
+/* ---------- Банки заданий ---------- */
+const KLAB = { T: 'Истинное высказывание', F: 'Ложное высказывание', N: 'Не высказывание' };
+const STATEMENTS = [
+  { s: 'Москва — столица России.', k: 'T', why: 'Это утверждение о факте, и оно верно.' },
+  { s: 'В одном байте 8 бит.', k: 'T', why: 'Так и есть: 1 байт = 8 бит.' },
+  { s: 'Число 15 делится на 3 без остатка.', k: 'T', why: '15 : 3 = 5, остатка нет.' },
+  { s: 'Вода состоит из водорода и кислорода.', k: 'T', why: 'Формула воды — H₂O.' },
+  { s: 'В двоичной системе счисления используются только цифры 0 и 1.', k: 'T', why: 'Двоичная система имеет ровно две цифры.' },
+  { s: '2 + 2 = 5.', k: 'F', why: 'Это утверждение, но неверное: 2 + 2 = 4.' },
+  { s: 'Число 7 — чётное.', k: 'F', why: '7 не делится на 2, утверждение ложно.' },
+  { s: 'У треугольника четыре угла.', k: 'F', why: 'У треугольника три угла.' },
+  { s: 'Солнце вращается вокруг Земли.', k: 'F', why: 'Наоборот: Земля вращается вокруг Солнца.' },
+  { s: 'Пингвины умеют летать.', k: 'F', why: 'Пингвины — нелетающие птицы.' },
+  { s: 'Который час?', k: 'N', why: 'Это вопрос: про него нельзя сказать «истинно» или «ложно».' },
+  { s: 'Закрой дверь!', k: 'N', why: 'Это побуждение (приказ), а не утверждение.' },
+  { s: 'x + 3 > 10', k: 'N', why: 'Значение зависит от x. Пока x неизвестен, это не высказывание.' },
+  { s: 'Ура, каникулы!', k: 'N', why: 'Это восклицание: оно ничего не утверждает, что можно проверить.' },
+  { s: 'Решите задачу № 5.', k: 'N', why: 'Это просьба-задание, а не утверждение.' },
+  { s: 'Число y — простое.', k: 'N', why: 'Неизвестно, чему равно y, поэтому истинность определить нельзя.' },
+];
+const ST_TF = STATEMENTS.filter(s => s.k !== 'N'), ST_N = STATEMENTS.filter(s => s.k === 'N');
+const NEGATIONS = [
+  { s: 'Число 10 больше 3', ok: 'Число 10 не больше 3', bad: ['Число 10 меньше 3', 'Число 3 больше 10'], why: '«Не больше» включает и случай «равно», а «меньше» — нет. Поэтому отрицание — «не больше».' },
+  { s: 'Все двери открыты', ok: 'Не все двери открыты', bad: ['Все двери закрыты', 'Ни одна дверь не открыта'], why: 'Чтобы «все открыты» стало ложным, достаточно одной закрытой двери. Это и есть «не все двери открыты».' },
+  { s: 'Сегодня понедельник', ok: 'Сегодня не понедельник', bad: ['Сегодня вторник', 'Завтра понедельник'], why: '«Сегодня вторник» — лишь один из шести случаев, когда исходное высказывание ложно. Отрицание охватывает их все.' },
+  { s: 'Робот включён', ok: 'Неверно, что робот включён', bad: ['Робот включён частично', 'Робот включён снова'], why: 'Отрицание строится частицей «не» или словами «неверно, что…».' },
+  { s: 'Число 6 — чётное', ok: 'Число 6 не является чётным', bad: ['Число 7 — нечётное', 'Число 6 делится на 3'], why: 'Отрицание говорит о том же объекте (число 6) и меняет значение на противоположное.' },
+];
+const ORDER = ['НЕ A ИЛИ B И C', 'A ИЛИ НЕ B И C', 'НЕ (A ИЛИ B) И C', 'НЕ (A И B) ИЛИ C', 'A И НЕ (B ИЛИ C)', '(A ИЛИ B) И НЕ C', 'A ИЛИ B И НЕ C', 'НЕ A И B ИЛИ C'];
+const PERMS = ['НЕ → И → ИЛИ', 'НЕ → ИЛИ → И', 'И → НЕ → ИЛИ', 'И → ИЛИ → НЕ', 'ИЛИ → НЕ → И', 'ИЛИ → И → НЕ'];
+
+/* ---------- Теория ---------- */
+const THEORY = {
+  1: () => `
+    <p><b>Высказывание</b> — повествовательное предложение, про которое можно однозначно сказать, истинно оно или ложно.</p>
+    <div class="rule">В логике истину обозначают ${bit(1)}, ложь — ${bit(0)}. Компьютеру хватает одного бита, чтобы хранить значение высказывания.</div>
+    <div class="cols2 wide">
+      <div><h3>Это высказывания</h3><ul><li>«В байте 8 бит» — ${bit(1)}</li><li>«7 — чётное число» — ${bit(0)}</li><li>«Земля — планета» — ${bit(1)}</li></ul></div>
+      <div><h3>Это не высказывания</h3><ul><li>вопросы: «Который час?»</li><li>приказы и просьбы: «Закрой дверь!»</li><li>восклицания: «Ура!»</li><li>предложения с неизвестной: «x + 3 > 10»</li></ul></div>
+    </div>
+    <p class="life"><b>Пример из жизни.</b> Датчик двери сообщает «дверь открыта». Это высказывание: в каждый момент оно либо истинно, либо ложно.</p>`,
+  2: () => `
+    <p><b>Инверсия</b> (логическое отрицание, операция <span class="op-name">НЕ</span>) меняет значение высказывания на противоположное.</p>
+    <div class="notation"><span>НЕ A</span><span>¬A</span><span>Ā</span><span>not A</span></div>
+    ${ttable('НЕ A')}
+    <div class="rule">НЕ 1 = 0, НЕ 0 = 1. Двойное отрицание возвращает исходное значение: НЕ (НЕ A) = A.</div>
+    <p class="life"><b>Пример.</b> A = «Дверь открыта». НЕ A = «Дверь не открыта». Если дверь открыта (A = 1), то НЕ A = 0.</p>`,
+  3: () => `
+    <p><b>Конъюнкция</b> (логическое умножение, операция <span class="op-name">И</span>) истинна <b>только тогда, когда оба</b> высказывания истинны.</p>
+    <div class="notation"><span>A И B</span><span>A ∧ B</span><span>A &amp; B</span><span>A · B</span><span>A and B</span></div>
+    ${ttable('A И B')}
+    <div class="rule">Похоже на умножение: 1 · 1 = 1, а если есть хоть один 0, результат 0.</div>
+    <p class="life"><b>Пример.</b> Сейф открывается, если приложена ключ-карта <b>И</b> введён верный код. Одной карты мало.</p>`,
+  4: () => `
+    <p><b>Дизъюнкция</b> (логическое сложение, операция <span class="op-name">ИЛИ</span>) ложна <b>только тогда, когда оба</b> высказывания ложны.</p>
+    <div class="notation"><span>A ИЛИ B</span><span>A ∨ B</span><span>A | B</span><span>A + B</span><span>A or B</span></div>
+    ${ttable('A ИЛИ B')}
+    <div class="rule">Логическое ИЛИ не исключающее: 1 ИЛИ 1 = 1. Похоже на сложение, только 1 + 1 здесь тоже 1.</div>
+    <p class="life"><b>Пример.</b> Свет в коридоре включается кнопкой у входа <b>ИЛИ</b> кнопкой у выхода. Хватит любой.</p>`,
+  5: () => `
+    <p>Если в выражении несколько операций, они выполняются в строгом порядке:</p>
+    <div class="rule"><b>1)</b> действия в скобках &nbsp; <b>2)</b> <span class="op-name">НЕ</span> &nbsp; <b>3)</b> <span class="op-name">И</span> &nbsp; <b>4)</b> <span class="op-name">ИЛИ</span></div>
+    <p>Как в арифметике: И похоже на умножение, ИЛИ на сложение, поэтому И выполняется раньше ИЛИ.</p>
+    <p><b>Пример.</b> ${exprHTML('НЕ A ИЛИ B И C')} при ${envStr({ A: 1, B: 1, C: 0 })}:</p>
+    ${stepsHTML('НЕ A ИЛИ B И C', { A: 1, B: 1, C: 0 })}
+    <p class="life"><b>Ловушка.</b> ${exprHTML('НЕ (A ИЛИ B)')} и ${exprHTML('НЕ A ИЛИ B')} — разные выражения. В первом НЕ применяется к результату скобки.</p>`,
+  6: () => `
+    <p><b>Таблица истинности</b> показывает значение выражения при всех наборах значений переменных.</p>
+    <div class="rule">Строк в таблице 2<sup>n</sup>, где n — число переменных: 2 переменные → 4 строки, 3 переменные → 8 строк. Наборы перебирают как двоичные числа: 00, 01, 10, 11.</div>
+    <p>Промежуточные столбцы заполняют в порядке действий. Пример для ${exprHTML('НЕ A И B')}:</p>
+    ${ttable('НЕ A И B')}
+    <p><b>Подбор значения переменной.</b> Подставь по очереди X = 0 и X = 1 и посмотри, когда выражение истинно. Может подойти одно значение, оба или ни одного.</p>
+    <p class="life">Финальный шлюз охраняет вирус «ЛОЖЬ». Каждый открытый замок снимает треть его защиты.</p>`,
+};
+
+/* ---------- Отсеки ---------- */
+const SECTORS = [
+  { id: 1, name: 'Высказывания', place: 'Отсек сканирования', sim: { kind: 'scan' },
+    simIntro: 'Сканер получил шесть сообщений из систем лаборатории. Нажми на каждое, чтобы проверить, высказывание ли это и какое у него значение.',
+    locks: [
+      () => { const s = pick(STATEMENTS); return choice(`Что это за предложение?<blockquote>${esc(s.s)}</blockquote>`, KLAB[s.k], Object.values(KLAB).filter(x => x !== KLAB[s.k]), 'Сначала спроси себя: можно ли вообще сказать про это предложение «верно» или «неверно»? Вопросы, приказы, восклицания и предложения с неизвестной величиной — не высказывания.', `<p>«${esc(s.s)}» — <b>${KLAB[s.k].toLowerCase()}</b>. ${s.why}</p>`); },
+      () => { const s = pick(ST_TF); return { type: 'tf', q: `Определи значение высказывания:<blockquote>${esc(s.s)}</blockquote>`, answer: s.k === 'T', hint: 'Нажми «Истина», если утверждение соответствует действительности, и «Ложь», если нет.', explain: `<p>Значение: ${bit(s.k === 'T' ? 1 : 0)}. ${s.why}</p>` }; },
+      () => {
+        const hint = 'Высказывание утверждает что-то, что можно проверить. Ищи вопрос, приказ, восклицание или неизвестную переменную.';
+        if (rnd(2)) { const n = pick(ST_N); return choice('Какое из предложений <b>не является</b> высказыванием?', esc(n.s), shuffle(ST_TF).slice(0, 3).map(x => esc(x.s)), hint, `<p>«${esc(n.s)}» — не высказывание. ${n.why}</p><p>Остальные варианты — высказывания: про каждое можно сказать, истинно оно или ложно.</p>`); }
+        const y = pick(ST_TF); return choice('Какое из предложений <b>является</b> высказыванием?', esc(y.s), shuffle(ST_N).slice(0, 3).map(x => esc(x.s)), hint, `<p>«${esc(y.s)}» — высказывание со значением ${bit(y.k === 'T' ? 1 : 0)}. ${y.why}</p><p>Остальные варианты — вопрос, побуждение, восклицание или предложение с неизвестной.</p>`);
+      },
+    ] },
+  { id: 2, name: 'Операция НЕ', place: 'Отсек инверсии', sim: { src: 'НЕ A', legend: { A: 'дверь открыта' }, out: 'Индикатор «Дверь НЕ открыта»' },
+    simIntro: 'Переключай A и смотри на индикатор. Изучи обе комбинации, чтобы получить бонус.',
+    locks: [
+      () => tfValue(['НЕ A', 'НЕ (НЕ A)', 'НЕ B', 'НЕ (НЕ B)'], 'НЕ меняет значение на противоположное: НЕ 1 = 0, НЕ 0 = 1. Двойное отрицание возвращает исходное значение.'),
+      () => { const n = pick(NEGATIONS); return choice(`Какое высказывание является <b>отрицанием</b> высказывания «${n.s}»?`, n.ok, n.bad, 'Отрицание должно быть истинным во всех случаях, когда исходное высказывание ложно, и ложным, когда оно истинно.', `<p>Отрицание: «${n.ok}». ${n.why}</p>`); },
+      () => switchTask('Установи переключатели так, чтобы каждая лампа оказалась в нужном состоянии. Лампы покажут результат только после проверки.', [{ src: 'НЕ A', target: rnd(2) }, { src: 'НЕ B', target: rnd(2) }, { src: 'НЕ (НЕ C)', target: rnd(2) }], 'Лампа «НЕ A» горит, когда A = 0. А двойное отрицание НЕ (НЕ C) равно самому C.'),
+    ] },
+  { id: 3, name: 'Операция И', place: 'Отсек хранилища', sim: { src: 'A И B', legend: { A: 'приложена ключ-карта', B: 'введён верный код' }, out: 'Сейф открыт' },
+    simIntro: 'Сейф открывается только при одновременном выполнении двух условий. Проверь все 4 комбинации.',
+    locks: [
+      () => tfValue(['A И B', 'A И НЕ B', 'НЕ A И B'], 'И даёт 1 только когда оба операнда равны 1. Если есть НЕ, сначала посчитай его.'),
+      () => pick([
+        () => choice('Дверь склада открывается, если у робота есть ключ-карта <b>И</b> он ввёл верный код. Карта есть, код введён неверно. Что произойдёт?', 'Дверь останется закрытой', ['Дверь откроется', 'Дверь откроется наполовину', 'Дверь откроется, но включится тревога'], 'Запиши условие как A И B и подставь значения.', `<p>A = «есть карта» = ${bit(1)}, B = «код верный» = ${bit(0)}. A И B = ${bit(1)} И ${bit(0)} = ${bit(0)}. Для И нужны оба условия.</p>`),
+        () => choice('Известно, что выражение A И B <b>ложно</b>. Что можно сказать точно?', 'Хотя бы одно из A и B ложно', ['A и B оба ложны', 'A ложно', 'B истинно'], 'Посмотри в таблицу истинности И: в каких строках результат 0?', '<p>A И B = 0 в трёх строках из четырёх: 0 И 0, 0 И 1, 1 И 0. Общее у них одно: хотя бы один операнд равен 0.</p>'),
+        () => choice('Сколько наборов значений A, B, C делают выражение A И B И C <b>истинным</b>?', '1', ['3', '7', '8'], 'Всего наборов 2³ = 8. Когда И даёт 1?', '<p>Всего наборов 2³ = 8. Конъюнкция истинна, только если все три переменные равны 1. Такой набор один: 1, 1, 1.</p>'),
+      ])(),
+      () => switchTask('Установи переключатели так, чтобы лампа загорелась. Результат появится после проверки.', [{ src: pick(['A И НЕ B И C', 'НЕ A И B И НЕ C', 'A И B И НЕ C', 'НЕ A И НЕ B И C']), target: 1 }], 'Чтобы И дало 1, каждая часть должна быть равна 1. Для части «НЕ X» это значит X = 0.'),
+    ] },
+  { id: 4, name: 'Операция ИЛИ', place: 'Отсек связи', sim: { src: 'A ИЛИ B', legend: { A: 'кнопка у входа', B: 'кнопка у выхода' }, out: 'Свет в коридоре' },
+    simIntro: 'Свет включается любой из двух кнопок. Проверь все 4 комбинации, особенно ту, где нажаты обе.',
+    locks: [
+      () => tfValue(['A ИЛИ B', 'НЕ A ИЛИ B', 'A ИЛИ НЕ B'], 'ИЛИ даёт 0 только когда оба операнда равны 0. Если есть НЕ, сначала посчитай его.'),
+      () => pick([
+        () => choice('Аварийная лампа загорается, если перегрелся мотор <b>ИЛИ</b> разрядился аккумулятор. Лампа <b>не горит</b>. Что верно?', 'Мотор не перегрет, и аккумулятор не разряжен', ['Мотор перегрет', 'Аккумулятор разряжен', 'По лампе ничего нельзя сказать'], 'Лампа = A ИЛИ B = 0. В какой строке таблицы ИЛИ результат 0?', '<p>Лампа = A ИЛИ B = 0. Дизъюнкция ложна только в одном случае: A = 0 и B = 0.</p>'),
+        () => choice('Известно, что выражение A ИЛИ B <b>истинно</b>. Что можно сказать точно?', 'Хотя бы одно из A и B истинно', ['A и B оба истинны', 'Ровно одно из A и B истинно', 'A истинно'], 'В скольких строках таблицы ИЛИ результат 1? Что у них общего?', '<p>A ИЛИ B = 1 в трёх случаях: 0 ИЛИ 1, 1 ИЛИ 0 и 1 ИЛИ 1. Точно известно только одно: истинно хотя бы одно. Логическое ИЛИ не исключающее.</p>'),
+        () => choice('Сколько наборов значений A, B, C делают выражение A ИЛИ B ИЛИ C <b>ложным</b>?', '1', ['0', '3', '7'], 'Когда ИЛИ даёт 0?', '<p>Дизъюнкция ложна, только если все операнды ложны: набор 0, 0, 0. Остальные 7 наборов дают 1.</p>'),
+      ])(),
+      () => tableTask(pick(['A ИЛИ B', 'A ИЛИ НЕ B', 'НЕ A ИЛИ B']), 'Иди по строкам. Если есть НЕ, сначала заполни его столбец. ИЛИ даёт 0 только при 0 ИЛИ 0.'),
+    ] },
+  { id: 5, name: 'Порядок операций', place: 'Отсек управления', sim: { src: 'НЕ A ИЛИ B И C', legend: null, out: 'Результат выражения' },
+    simIntro: 'Здесь три переменные и три операции. Переключай A, B, C и следи, как по шагам меняется результат. Наборов всего 8.',
+    locks: [
+      () => {
+        const src = pick(ORDER), ops = run(src, { A: 0, B: 0, C: 0 }).steps.map(s => s.op).join(' → ');
+        return choice(`В каком порядке выполняются операции в выражении ${exprHTML(src)}?`, ops, shuffle(PERMS.filter(p => p !== ops)).slice(0, 3), 'Сначала скобки, затем НЕ, затем И, последним ИЛИ.', `<p>Порядок: скобки → НЕ → И → ИЛИ. Для этого выражения шаги такие:</p><ol class="steps">${stepCols(src).map(c => `<li>${exprHTML(c)}</li>`).join('')}</ol>`);
+      },
+      () => tfValue(ORDER, 'Порядок: скобки → НЕ → И → ИЛИ. Считай по шагам и записывай промежуточные результаты.'),
+      () => { const src = pick(ORDER), target = rnd(2); return switchTask(`Сделай так, чтобы лампа ${target ? '<b>загорелась</b>' : '<b>погасла</b>'}: выражение должно стать равным ${bit(target)}.`, [{ src, target }], 'Найди операцию, которая выполняется последней. Например, если последним идёт ИЛИ, для 1 хватит одной истинной части, а для 0 обе части должны быть ложны.'); },
+    ] },
+  { id: 6, name: 'Финальный шлюз', place: 'Логово вируса «ЛОЖЬ»', boss: true, sim: { src: '(A ИЛИ B) И НЕ C', legend: { A: 'датчик движения 1', B: 'датчик движения 2', C: 'режим «тишина»' }, out: 'Сигнал тревоги' },
+    simIntro: 'Это настоящая схема сигнализации шлюза. Тревога звучит, если сработал хотя бы один датчик и не включён режим тишины. Изучи все 8 наборов.',
+    locks: [
+      () => tableTask(pick(['НЕ A И B', 'A ИЛИ НЕ B', 'НЕ (A И B)', 'НЕ (A ИЛИ B)']), 'Сначала заполни промежуточный столбец, потом итоговый. Порядок: скобки → НЕ → И → ИЛИ.'),
+      () => solvableSwitch(['A ИЛИ B', 'НЕ (A И B)', 'НЕ C ИЛИ A', 'B И НЕ C', 'A ИЛИ НЕ C', 'НЕ A ИЛИ B', '(A ИЛИ C) И НЕ B', 'НЕ (B ИЛИ C)', 'A И C ИЛИ B'], 3, 'Три лампы, одна комбинация переключателей. Установи A, B, C так, чтобы все лампы были в нужном состоянии. Лампы покажут результат после проверки.', 'Начни с самой «строгой» лампы: где И должно дать 1 или ИЛИ должно дать 0. Такие условия сразу фиксируют значения переменных.'),
+      () => {
+        const src = pick(['(X ИЛИ A) И НЕ (X И B)', 'НЕ X И A ИЛИ X И B', 'X И A ИЛИ НЕ X И НЕ B', 'X ИЛИ A И НЕ B', 'НЕ (X ИЛИ A) ИЛИ B И X']);
+        const env = { A: rnd(2), B: rnd(2) }, v0 = value(src, { ...env, X: 0 }), v1 = value(src, { ...env, X: 1 });
+        const opts = ['X = 0', 'X = 1', 'При любом X', 'Ни при каком X'];
+        const right = v0 && v1 ? opts[2] : !v0 && !v1 ? opts[3] : v1 ? opts[1] : opts[0];
+        return choice(`Дано: ${envStr(env)}.<br>При каком значении X выражение ${exprHTML(src)} <b>истинно</b>?`, right, opts.filter(o => o !== right), 'Подставь X = 0 и посчитай. Потом подставь X = 1 и посчитай ещё раз.',
+          `<p>Проверяем X = 0:</p>${stepsHTML(src, { ...env, X: 0 })}<p>Проверяем X = 1:</p>${stepsHTML(src, { ...env, X: 1 })}<p>Ответ: <b>${right}</b>.</p>`);
+      },
+    ] },
+];
+
+/* ---------- Достижения и ранги ---------- */
+const ACH = [
+  { id: 'first', ic: '1', name: 'Первый взлом', d: 'Открыть первый замок' },
+  { id: 'explorer', ic: '?', name: 'Исследователь', d: 'Изучить все комбинации в симуляторе' },
+  { id: 'scientist', ic: '∀', name: 'Учёный', d: 'Изучить все симуляторы игры' },
+  { id: 'combo5', ic: '×5', name: 'Серия ×5', d: '5 верных ответов подряд' },
+  { id: 'combo10', ic: '×10', name: 'Серия ×10', d: '10 верных ответов подряд' },
+  { id: 'clean', ic: '✓', name: 'Чистая работа', d: 'Пройти отсек без ошибок и подсказок' },
+  { id: 'phoenix', ic: '↻', name: 'Перезагрузка', d: 'Пройти отсек после перегрузки' },
+  { id: 'speed', ic: '⚡', name: 'Быстрый взлом', d: 'Открыть дверь меньше чем за 90 секунд' },
+  { id: 'nohints', ic: '!', name: 'Своим умом', d: 'Пройти игру без подсказок' },
+  { id: 'boss', ic: '✕', name: 'Антивирус', d: 'Победить вирус «ЛОЖЬ»' },
+  { id: 'master', ic: '★', name: 'Магистр логики', d: 'Собрать все 18 звёзд' },
+];
+const RANKS = [[0, 'Стажёр'], [700, 'Техник'], [1400, 'Инженер'], [2000, 'Логик'], [2500, 'Магистр логики']];
+const rankOf = sc => { let r = RANKS[0], next = null; for (let i = 0; i < RANKS.length; i++) { if (sc >= RANKS[i][0]) { r = RANKS[i]; next = RANKS[i + 1] || null; } } return { name: r[1], from: r[0], next }; };
+const TAUNTS = ['ХА-ХА! Ложь сильнее логики!', 'Твой процессор перегрелся, жестянка?', 'Ещё ошибка, и шлюз закроется навсегда!', 'Я переписал твою таблицу истинности!'];
+const HITS = ['АРГХ! Защита пробита!', 'Невозможно… логика работает!', 'Сбой… сбой… последний рубеж!'];
+
+/* ---------- Состояние ---------- */
+let S = null;      // сохраняемое состояние игры
+let R = null;      // состояние текущего отсека
+let screen = 'title';
+const newState = (name, cls) => ({ v: 1, name, cls, startedAt: Date.now(), elapsed: 0, score: 0, errors: 0, hints: 0, streak: 0, bestStreak: 0, ach: {}, sectors: {}, explored: {}, current: 1, finishedAt: null, sound: Snd.on });
+const save = () => { if (S) store.set(SAVE_KEY, S); };
+const doneCount = () => SECTORS.filter(s => S.sectors[s.id]?.done).length;
+const starTotal = () => SECTORS.reduce((a, s) => a + (S.sectors[s.id]?.stars || 0), 0);
+const overallStars = () => { const t = starTotal(); return t >= 16 ? 3 : t >= 11 ? 2 : 1; };
+const unlocked = id => id === 1 || !!S.sectors[id - 1]?.done;
+
+/* ---------- Общие элементы интерфейса ---------- */
+function toast(title, text) {
+  const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = `<b>${title}</b>${text}`;
+  $('#toasts').appendChild(el); setTimeout(() => el.remove(), 4200);
+}
+function floatPts(text, cls, anchor) {
+  const el = document.createElement('div'); el.className = 'pts ' + cls; el.textContent = text;
+  const r = anchor ? anchor.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0 };
+  el.style.left = Math.min(innerWidth - 120, Math.max(8, r.left + r.width / 2 - 30)) + 'px';
+  el.style.top = Math.max(60, r.top - 10) + 'px';
+  document.body.appendChild(el); setTimeout(() => el.remove(), 1300);
+}
+function alarmFX(target) {
+  const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  if (target) { target.classList.remove('shake'); void target.offsetWidth; target.classList.add('shake'); }
+}
+function showModal(html, cls = '') {
+  const m = $('#modal'), c = $('.modal-card', m);
+  c.className = 'modal-card ' + cls; c.innerHTML = html; m.hidden = false;
+  const f = c.querySelector('[data-autofocus]') || c.querySelector('button'); if (f) setTimeout(() => f.focus(), 30);
+}
+const closeModal = () => { $('#modal').hidden = true; };
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden && $('#modal [data-act="close-modal"]')) closeModal(); });
+function award(id) {
+  if (!S || S.ach[id]) return;
+  const a = ACH.find(x => x.id === id); S.ach[id] = Date.now(); save();
+  setTimeout(() => { toast('Достижение получено', `<span style="font-weight:700">${a.name}</span><br><span class="dim">${a.d}</span>`); Snd.bonus(); }, 350);
+}
+function addScore(d, anchor, label) {
+  if (!S || (R && R.practice)) return;
+  S.score = Math.max(0, S.score + d);
+  floatPts(label || (d > 0 ? '+' + d : String(d)), label ? 'bonus' : d > 0 ? 'plus' : 'minus', anchor);
+  hud(); save();
+}
+
+/* ---------- HUD ---------- */
+function hud() {
+  const h = $('#hud');
+  if (!S || screen === 'title' || screen === 'intro' || screen === 'teacher') { h.hidden = true; return; }
+  h.hidden = false;
+  const rk = rankOf(S.score);
+  h.innerHTML = `
+    <div class="hud-who">${robot('ok', 34)}<div style="min-width:0"><div class="nm">${esc(S.name)}</div><div class="rk">${rk.name}</div></div></div>
+    <div class="stat"><b id="hud-score">${S.score}</b><span>очки</span></div>
+    <div class="stat"><b id="hud-time">${fmtTime(S.elapsed)}</b><span>время</span></div>
+    <div class="stat combo"><b>×${S.streak}</b><span>серия</span></div>
+    <div class="stat st-stars"><b>${starTotal()}/18</b><span>звёзды</span></div>
+    <div class="hud-btns">
+      <button class="icon-btn" data-act="map" title="Карта отсеков" aria-label="Карта отсеков">⌂</button>
+      <button class="icon-btn" data-act="rules" title="Правила" aria-label="Правила игры">?</button>
+      <button class="icon-btn" data-act="sound" title="Звук" aria-label="Звук ${Snd.on ? 'включён' : 'выключен'}">${Snd.on ? '♪' : '–'}</button>
+    </div>`;
+}
+setInterval(() => {
+  if (S && !S.finishedAt && (screen === 'map' || screen === 'sector') && !document.hidden) {
+    S.elapsed++; if (R && R.phase === 'door') R.doorSec++;
+    const t = $('#hud-time'); if (t) t.textContent = fmtTime(S.elapsed);
+    if (S.elapsed % 5 === 0) save();
+  }
+}, 1000);
+
+function go(scr) { screen = scr; closeModal(); hud(); RENDER[scr](); scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' }); }
+
+/* ---------- Экран: заставка ---------- */
+function renderTitle() {
+  const saved = store.get(SAVE_KEY);
+  $('#stage').innerHTML = `
+  <section class="title">
+    <div class="stack" style="gap:22px">
+      <div class="eyebrow">Информатика · 8 класс · Логические выражения</div>
+      <h1 class="logo"><span>Побег</span><span>из лабора-</span><span class="l2">тории</span></h1>
+      <p style="font-size:18px;max-width:52ch">Система безопасности дала сбой, и вирус «ЛОЖЬ» запер все двери. Ты — робот БИТ-8. Шесть отсеков, восемнадцать замков, одна логика.</p>
+      <div class="rules-mini">
+        <div><b>3</b>заряда энергии в каждом отсеке</div>
+        <div><b>+100</b>очков за каждый открытый замок</div>
+        <div><b>★★★</b>звёзды за прохождение без ошибок</div>
+      </div>
+      <div class="hazard"></div>
+      ${saved && saved.v === 1 ? `
+        <div class="panel stack">
+          <div class="eyebrow">Сохранённая игра</div>
+          <div class="row" style="justify-content:space-between"><div><b>${esc(saved.name)}</b>${saved.cls ? ', ' + esc(saved.cls) : ''} · ${saved.score} очков · пройдено ${SECTORS.filter(s => saved.sectors[s.id]?.done).length}/6</div></div>
+          <div class="row"><button class="btn primary" data-act="continue" data-autofocus>Продолжить</button><button class="btn ghost" data-act="reset-ask">Новая игра</button><button class="btn ghost" data-act="teacher">Для учителя</button></div>
+          <div id="confirm-slot"></div>
+        </div>` : newGameForm()}
+    </div>
+    <div class="title-art"><div class="glow"></div><div class="float">${robot('ok', 260)}</div></div>
+  </section>`;
+}
+function newGameForm() {
+  return `<form class="stack" id="start-form" autocomplete="off">
+    <div class="form2">
+      <label for="f-name">Имя и фамилия<input id="f-name" maxlength="40" placeholder="Например, Аня Смирнова" required></label>
+      <label for="f-cls">Класс<input id="f-cls" maxlength="8" placeholder="8 «А»"></label>
+    </div>
+    <div class="row"><button class="btn primary" type="submit">Начать игру</button><button class="btn ghost" type="button" data-act="teacher">Для учителя</button></div>
+  </form>`;
+}
+document.addEventListener('submit', e => {
+  if (e.target.id === 'start-form') {
+    e.preventDefault();
+    const name = $('#f-name').value.trim().replace(/~/g, '') || 'Игрок', cls = $('#f-cls').value.trim().replace(/~/g, '');
+    S = newState(name, cls); save(); go('intro');
+  }
+});
+
+/* ---------- Экран: вступление ---------- */
+const INTRO = [
+  { who: 'sys', name: 'Система', text: 'ТРЕВОГА. Сбой системы безопасности. Все шлюзы лаборатории заблокированы.' },
+  { who: 'logos', name: 'ЛОГОС, бортовой ИИ', text: 'БИТ-8, ты меня слышишь? Это ЛОГОС. Вирус «ЛОЖЬ» перепрограммировал двери.' },
+  { who: 'logos', name: 'ЛОГОС, бортовой ИИ', text: 'Теперь каждая дверь открывается только верно вычисленным логическим выражением.' },
+  { who: 'bit', name: 'БИТ-8', text: 'Понял. Сколько отсеков до выхода?' },
+  { who: 'logos', name: 'ЛОГОС, бортовой ИИ', text: 'Шесть. В каждом есть терминал с правилами, симулятор и дверь с тремя замками.' },
+  { who: 'logos', name: 'ЛОГОС, бортовой ИИ', text: 'Береги энергию: на отсек даётся 3 заряда. Ошибка стоит заряда и включает тревогу. Кончатся заряды, и замки сбросятся.' },
+  { who: 'bit', name: 'БИТ-8', text: 'Принято. Запускаю логические схемы. Идём к отсеку сканирования!' },
+];
+let introI = 0, typer = null;
+function renderIntro() { introI = 0; drawIntro(); }
+function drawIntro() {
+  const l = INTRO[introI];
+  const face = l.who === 'logos' ? `<div class="logos-core">ЛОГОС</div>` : l.who === 'sys' ? robot('alarm', 110) : robot('ok', 110);
+  $('#stage').innerHTML = `
+    <section class="dialog">
+      <div class="speaker">${face}</div>
+      <div class="stack">
+        <div class="bubble ${l.who}" data-act="intro-next" role="button" tabindex="0" aria-label="Дальше">
+          <div class="who">${l.name}</div><div class="txt" id="intro-txt"></div>
+          <div class="eyebrow" style="text-align:right">${introI + 1}/${INTRO.length} · нажми, чтобы продолжить</div>
+        </div>
+        <div class="row" style="justify-content:flex-end"><button class="btn ghost small" data-act="intro-skip">Пропустить</button><button class="btn primary" data-act="intro-next">${introI === INTRO.length - 1 ? 'К карте отсеков' : 'Дальше'}</button></div>
+      </div>
+    </section>`;
+  if (l.who === 'sys') { alarmFX(); Snd.alarm(); }
+  typeText($('#intro-txt'), l.text);
+}
+function typeText(el, text) {
+  clearInterval(typer);
+  if (REDUCED) { el.textContent = text; el.dataset.done = '1'; return; }
+  let i = 0; el.dataset.done = '';
+  typer = setInterval(() => { i += 2; el.textContent = text.slice(0, i); if (i % 6 === 0) Snd.tone(1200, .015, 'square', .012); if (i >= text.length) { clearInterval(typer); el.dataset.done = '1'; } }, 22);
+}
+
+/* ---------- Экран: карта ---------- */
+function renderMap() {
+  const cur = SECTORS.find(s => unlocked(s.id) && !S.sectors[s.id]?.done)?.id || 6;
+  const rk = rankOf(S.score), pct = rk.next ? Math.round((S.score - rk.from) / (rk.next[0] - rk.from) * 100) : 100;
+  const done = doneCount();
+  $('#stage').innerHTML = `
+  <section class="stack" style="gap:22px">
+    <div class="map-head">
+      <div class="stack" style="gap:6px">
+        <div class="eyebrow">Схема станции</div>
+        <h2>Карта отсеков</h2>
+      </div>
+      <div class="stack" style="gap:6px;flex:1;min-width:220px;max-width:420px">
+        <div class="row" style="justify-content:space-between"><span class="dim">Пройдено отсеков</span><b class="mono">${done}/6</b></div>
+        <div class="progress"><i style="width:${done / 6 * 100}%"></i></div>
+      </div>
+    </div>
+    <div class="map">
+      ${SECTORS.map(s => {
+        const st = S.sectors[s.id], open = unlocked(s.id), cls = st?.done ? 'done' : open ? 'avail' : 'locked';
+        return `<button class="node ${cls} ${s.boss ? 'boss' : ''}" data-act="open-sector" data-sid="${s.id}" ${open ? '' : 'disabled aria-disabled="true"'}>
+          ${s.id === cur && open && !S.finishedAt ? `<span class="here float">${robot('ok', 46)}</span>` : ''}
+          <span class="code">ОТСЕК ${String(s.id).padStart(2, '0')} · ${s.place.toUpperCase()}</span>
+          <h3>${s.name}</h3>
+          <span class="sub">${s.boss ? 'Босс: вирус «ЛОЖЬ»' : '3 замка · теория · симулятор'}</span>
+          <span class="foot">${starsHTML(st?.stars || 0)}<span class="chip">${st?.done ? 'Пройден' : open ? 'Доступен' : 'Заблокирован'}</span></span>
+        </button>`;
+      }).join('')}
+    </div>
+    ${S.finishedAt ? `<div class="panel row" style="justify-content:space-between"><div><b>Лаборатория пройдена!</b> <span class="dim">Отсеки можно проходить повторно в режиме тренировки, очки при этом не меняются.</span></div><button class="btn primary" data-act="finale">Итоги и код результата</button></div>` : ''}
+    <div class="panel stack">
+      <div class="row" style="justify-content:space-between"><h3>Ранг: <span style="color:var(--signal)">${rk.name}</span></h3><span class="dim mono">${rk.next ? `до ранга «${rk.next[1]}»: ${rk.next[0] - S.score} очков` : 'максимальный ранг'}</span></div>
+      <div class="progress rank"><i style="width:${pct}%"></i></div>
+    </div>
+    <div class="stack">
+      <div class="row" style="justify-content:space-between"><h3>Достижения</h3><span class="dim mono">${Object.keys(S.ach).length}/${ACH.length}</span></div>
+      <div class="ach-grid">${ACH.map(a => `<div class="ach ${S.ach[a.id] ? 'got' : ''}"><span class="ic">${a.ic}</span><span><b>${a.name}</b><span class="dim">${a.d}</span></span></div>`).join('')}</div>
+    </div>
+  </section>`;
+}
+
+/* ---------- Экран: отсек ---------- */
+function enterSector(sid) {
+  const sec = SECTORS[sid - 1];
+  R = {
+    sid, sec, phase: 'theory', practice: !!S.sectors[sid]?.done || !!S.finishedAt,
+    energy: 3, locks: sec.locks.map(g => g()), opened: [false, false, false], active: 0, solved: false,
+    errors: 0, hints: 0, overloads: 0, doorSec: 0, feedback: null, seen: { theory: true },
+    simEnv: {}, visited: new Set(), scan: null, revealed: new Set(), say: 'Вводи коды, жестянка. Посмотрим, кто кого.',
+  };
+  if (sec.sim.kind === 'scan') {
+    R.scan = shuffle([...shuffle(STATEMENTS.filter(s => s.k === 'T')).slice(0, 2), ...shuffle(STATEMENTS.filter(s => s.k === 'F')).slice(0, 2), ...shuffle(ST_N).slice(0, 2)]);
+  } else { varsOf(sec.sim.src).forEach(v => R.simEnv[v] = 0); R.visited.add(envKey(R.simEnv)); }
+  S.current = sid; save(); go('sector');
+}
+function renderSector() {
+  const s = R.sec, ph = R.phase;
+  const steps = [['theory', 'Терминал'], ['sim', 'Симулятор'], ['door', 'Дверь']];
+  $('#stage').innerHTML = `
+  <section class="stack" style="gap:18px">
+    <div class="sec-head">
+      <div class="stack" style="gap:4px">
+        <div class="eyebrow">Отсек ${String(s.id).padStart(2, '0')} · ${s.place}</div>
+        <h2>${s.name}</h2>
+      </div>
+      <div class="row">
+        ${R.practice ? '<span class="practice">ТРЕНИРОВКА · очки не начисляются</span>' : ''}
+        <nav class="stepper" aria-label="Этапы отсека">${steps.map(([k, l], i) => `<button data-act="phase" data-phase="${k}" class="${ph === k ? 'cur' : ''} ${R.seen[k] && ph !== k ? 'done-step' : ''}">${i + 1}. ${l}</button>`).join('')}</nav>
+      </div>
+    </div>
+    <div id="phase"></div>
+  </section>`;
+  R.seen[ph] = true;
+  if (ph === 'theory') renderTheory(); else if (ph === 'sim') renderSim(); else renderDoor();
+}
+function renderTheory() {
+  const s = R.sec;
+  $('#phase').innerHTML = `
+    <div class="terminal">
+      <div class="terminal-bar"><i></i><i></i><i></i><span>terminal://отсек-${s.id}/справка</span></div>
+      <div class="terminal-body">${THEORY[s.id]()}
+        <div class="row wide"><button class="btn primary" data-act="phase" data-phase="sim">Запустить симулятор →</button><button class="btn ghost" data-act="phase" data-phase="door">Сразу к двери</button></div>
+      </div>
+    </div>`;
+}
+
+/* --- симулятор --- */
+function renderSim() {
+  const s = R.sec, c = s.sim;
+  let body;
+  if (c.kind === 'scan') {
+    body = `<div class="scan-grid">${R.scan.map((st, i) => {
+      const rev = R.revealed.has(i);
+      return `<button class="scan ${rev ? 'rev k' + st.k : ''}" data-act="scan" data-i="${i}" ${rev ? 'aria-disabled="true"' : ''}>
+        <span class="eyebrow">Сообщение ${i + 1}</span><span class="s">${esc(st.s)}</span>
+        ${rev ? `<span class="why">${st.why}</span><span class="res">${KLAB[st.k].toUpperCase()}${st.k !== 'N' ? ' · ' + (st.k === 'T' ? '1' : '0') : ''}</span>` : `<span class="res dim">НАЖМИ, ЧТОБЫ ПРОСКАНИРОВАТЬ</span>`}
+      </button>`;
+    }).join('')}</div>`;
+  } else {
+    const vars = varsOf(c.src), { v, steps } = run(c.src, R.simEnv);
+    body = `<div class="sim">
+      <div class="stack">
+        <div class="switches">${vars.map(x => `<button class="sw ${R.simEnv[x] ? 'on' : ''}" data-act="sim-toggle" data-var="${x}" aria-pressed="${!!R.simEnv[x]}"><span class="vn">${x} = ${R.simEnv[x]}</span><span class="knob"></span>${c.legend ? `<span class="lg">${c.legend[x]}</span>` : ''}</button>`).join('')}</div>
+        <div class="sim-out"><div class="biglamp ${v ? 'on' : ''}"></div><div class="stack" style="gap:6px;min-width:0"><span class="eyebrow">${c.out}</span><div>${exprHTML(c.src)} = ${bit(v)}</div><div class="dim" style="font-size:14px">${v ? 'Лампа горит: выражение истинно.' : 'Лампа погасла: выражение ложно.'}</div></div></div>
+        ${steps.length > 1 ? `<div class="panel" style="padding:14px"><span class="eyebrow">Вычисление по шагам</span><ol class="steps">${steps.map(st => `<li>${exprHTML(st.text)} : ${st.calc}</li>`).join('')}</ol></div>` : ''}
+      </div>
+      <div class="stack"><span class="eyebrow">Таблица истинности открывается по мере исследования</span>${ttable(c.src, { env: R.simEnv, visited: R.visited })}</div>
+    </div>`;
+  }
+  const total = c.kind === 'scan' ? R.scan.length : 1 << varsOf(c.src).length;
+  const got = c.kind === 'scan' ? R.revealed.size : R.visited.size;
+  const all = got >= total;
+  $('#phase').innerHTML = `
+    <div class="stack">
+      <div class="panel stack">
+        <p>${s.simIntro}</p>
+        <div class="explore"><span class="eyebrow">Исследовано</span><div class="progress" style="max-width:260px"><i style="width:${got / total * 100}%"></i></div><b class="mono">${got}/${total}</b><span class="dim">${all ? (S.explored[s.id] ? 'Всё изучено, бонус получен.' : '') : 'Бонус +50 за полное исследование'}</span></div>
+      </div>
+      ${body}
+      <div class="row"><button class="btn primary" data-act="phase" data-phase="door">К двери отсека →</button><button class="btn ghost" data-act="phase" data-phase="theory">← Терминал</button></div>
+    </div>`;
+}
+function checkExplored(anchor) {
+  const c = R.sec.sim, total = c.kind === 'scan' ? R.scan.length : 1 << varsOf(c.src).length, got = c.kind === 'scan' ? R.revealed.size : R.visited.size;
+  if (got >= total && !S.explored[R.sid]) {
+    S.explored[R.sid] = true;
+    if (!R.practice) { addScore(50, anchor, '+50 ИССЛЕДОВАНИЕ'); }
+    Snd.bonus(); award('explorer');
+    if (SECTORS.every(s => S.explored[s.id])) award('scientist');
+    save();
+  }
+}
+
+/* --- дверь --- */
+function renderDoor() {
+  $('#phase').innerHTML = `<div class="door-layout"><div class="door-box" id="doorbox"></div><section class="panel task" id="task" aria-live="polite"></section></div>`;
+  renderDoorBox(); renderTask();
+}
+function renderDoorBox(open = false) {
+  const s = R.sec, opened = R.opened.filter(Boolean).length;
+  $('#doorbox').innerHTML = `
+    ${s.boss ? `<div class="virus">${virusSVG}<div style="min-width:0;flex:1"><div class="eyebrow" style="color:var(--alarm)">Вирус «ЛОЖЬ» · защита ${3 - opened}/3</div><div class="hp">${[0, 1, 2].map(i => `<i class="${i < opened ? 'gone' : ''}"></i>`).join('')}</div><div class="say" id="virus-say">${esc(R.say)}</div></div></div>` : ''}
+    <div class="door ${open ? 'open' : ''}" id="door">
+      <div class="door-beyond">${robot('happy', 120)}</div>
+      <div class="leaf l"></div><div class="leaf r"></div>
+      <div class="locks">${R.opened.map((o, i) => `<span class="lock ${o ? 'on' : i === R.active && !open ? 'cur' : ''}" aria-label="Замок ${i + 1}: ${o ? 'открыт' : 'закрыт'}">${o ? '✓' : i + 1}</span>`).join('')}</div>
+      <div class="door-sign">ШЛЮЗ ${String(s.id).padStart(2, '0')} → ${s.id < 6 ? String(s.id + 1).padStart(2, '0') : 'ВЫХОД'}</div>
+    </div>
+    <div class="stack tools" style="gap:10px">
+      <div class="energy ${R.energy === 1 ? 'low' : ''}"><span class="eyebrow">Энергия</span><span class="cells">${[0, 1, 2].map(i => `<span class="cell ${i < R.energy ? '' : 'off'}"></span>`).join('')}</span></div>
+      <div class="row"><button class="btn small ghost" data-act="theory-modal">Повторить теорию</button><button class="btn small ghost" data-act="phase" data-phase="sim">Симулятор</button></div>
+    </div>`;
+}
+function renderTask() {
+  const t = R.locks[R.active], el = $('#task'), done = R.solved;
+  let body = '';
+  if (t.type === 'tf') {
+    body = `<div class="tf"><button class="btn t1" data-act="tf" data-v="1" ${done ? 'disabled' : ''}>ИСТИНА</button><button class="btn t0" data-act="tf" data-v="0" ${done ? 'disabled' : ''}>ЛОЖЬ</button></div>`;
+  } else if (t.type === 'choice') {
+    body = `<div class="opts">${t.options.map((o, i) => `<button class="opt ${done && i === t.answer ? 'right' : ''}" data-act="opt" data-i="${i}" ${done ? 'disabled' : ''}><span class="k">${'АБВГ'[i]}</span><span>${o}</span></button>`).join('')}</div>`;
+  } else if (t.type === 'switch') {
+    const shown = t.shown;
+    body = `<div class="lamps">${t.lamps.map((l, i) => {
+      const v = shown ? value(l.src, shown) : null, miss = shown && v !== l.target;
+      return `<div class="lamp-row ${miss ? 'miss' : ''}"><span class="lampdot ${v === null ? '' : v ? 'on' : 'off'}">${v === null ? '?' : v}</span><span>Лампа ${i + 1}: ${exprHTML(l.src)}</span><span class="target t${l.target}">${l.target ? 'должна ГОРЕТЬ' : 'должна ПОГАСНУТЬ'}</span></div>`;
+    }).join('')}</div>
+    <div class="switches">${t.vars.map(x => `<button class="sw ${t.env[x] ? 'on' : ''}" data-act="sw" data-var="${x}" aria-pressed="${!!t.env[x]}" ${done ? 'disabled' : ''}><span class="vn">${x} = ${t.env[x]}</span><span class="knob"></span></button>`).join('')}</div>`;
+  } else if (t.type === 'table') {
+    body = `<div class="tt-wrap"><table class="tt"><thead><tr>${t.vars.map(v => `<th>${v}</th>`).join('')}${t.cols.map((c, i) => `<th class="${i === t.cols.length - 1 ? 'fin' : ''}">${exprHTML(c)}</th>`).join('')}</tr></thead><tbody>${t.rows.map((env, r) => `<tr>${t.vars.map(v => `<td>${bit(env[v])}</td>`).join('')}${t.cols.map((c, ci) => { const val = t.fill[r][ci], err = t.errs && t.errs.has(r + ':' + ci); return `<td><button class="cellbtn ${val === null ? '' : 'v' + val} ${err ? 'err' : ''}" data-act="cell" data-r="${r}" data-c="${ci}" ${done ? 'disabled' : ''} aria-label="Строка ${r + 1}, столбец ${c}: ${val === null ? 'пусто' : val}">${val === null ? '·' : val}</button></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+  const needCheck = t.type === 'switch' || t.type === 'table';
+  const fb = R.feedback;
+  const allOpen = R.opened.every(Boolean);
+  el.innerHTML = `
+    <div class="task-head"><span class="tag">${KIND[t.type]}</span><span class="mono dim">ЗАМОК ${R.active + 1} из 3</span></div>
+    ${fb ? `<div class="feedback ${fb.cls}"><span class="fh">${fb.title}</span><div>${fb.html}</div></div>` : ''}
+    <div class="q">${t.q}</div>
+    ${body}
+    ${t.hintShown && !done ? `<div class="feedback hint"><span class="fh">Подсказка</span><div>${t.hint}</div></div>` : ''}
+    ${done ? `<div class="feedback ok"><span class="fh">Замок открыт · пояснение</span><div class="stack" style="gap:8px">${typeof t.explain === 'function' ? t.explain(t.env) : t.explain}</div></div>` : ''}
+    <div class="task-foot">
+      ${done
+        ? `<span class="sp"></span><button class="btn primary" data-act="${allOpen ? 'open-door' : 'next-lock'}" data-autofocus>${allOpen ? 'Открыть дверь' : 'Следующий замок →'}</button>`
+        : `<button class="btn ghost small" data-act="hint" ${t.hintShown ? 'disabled' : ''}>${t.hintShown ? 'Подсказка открыта' : 'Подсказка −20'}</button><span class="sp"></span>${needCheck ? `<button class="btn primary" data-act="check">Проверить</button>` : ''}`}
+    </div>`;
+  if (done) { const b = el.querySelector('[data-autofocus]'); if (b) b.focus({ preventScroll: true }); }
+}
+function answer(correct, anchor) {
+  if (R.solved) return;
+  R.feedback = null;
+  if (correct) return onCorrect(anchor);
+  onWrong(anchor);
+}
+function onCorrect(anchor) {
+  R.solved = true; R.opened[R.active] = true;
+  S.streak++; S.bestStreak = Math.max(S.bestStreak, S.streak);
+  Snd.ok();
+  addScore(100, anchor);
+  if (S.streak >= 3) { const b = Math.min(50, (S.streak - 2) * 10); setTimeout(() => addScore(b, anchor, `СЕРИЯ ×${S.streak} +${b}`), 380); }
+  award('first');
+  if (S.streak >= 5) award('combo5');
+  if (S.streak >= 10) award('combo10');
+  if (R.sec.boss) { const n = R.opened.filter(Boolean).length; R.say = HITS[Math.min(n - 1, 2)]; }
+  save(); hud(); renderDoorBox(); renderTask();
+}
+function onWrong(anchor) {
+  const t = R.locks[R.active];
+  S.streak = 0; R.errors++;
+  if (!R.practice) S.errors++;
+  addScore(-25, anchor);
+  R.energy--;
+  Snd.bad(); setTimeout(() => Snd.alarm(), 250);
+  alarmFX($('#task'));
+  if (R.sec.boss) R.say = pick(TAUNTS);
+  if (R.energy <= 0) { save(); hud(); renderDoorBox(); return overload(); }
+  let html = 'Тревога! Потрачен 1 заряд энергии.';
+  if (t.type === 'tf' || t.type === 'choice') {
+    const prev = t.q; let n = 0, nt;
+    do { nt = R.sec.locks[R.active](); n++; } while (nt.q === prev && n < 8);
+    R.locks[R.active] = nt;
+    html += ' Замок сменил код: перед тобой новое задание той же темы.';
+  } else if (t.type === 'switch') {
+    t.shown = { ...t.env };
+    html += ' Лампы показали, что получилось. Найди лампы в красной рамке и измени переключатели.';
+  } else if (t.type === 'table') {
+    t.errs = new Set();
+    t.rows.forEach((env, r) => { const vals = rowVals(t.src, env); t.cols.forEach((c, ci) => { if (t.fill[r][ci] !== vals[c]) t.errs.add(r + ':' + ci); }); });
+    html += ` Неверных или пустых клеток: ${t.errs.size}. Они подсвечены красным.`;
+  }
+  R.feedback = { cls: 'bad', title: 'Неверно · −25 очков', html };
+  save(); hud(); renderDoorBox(); renderTask();
+}
+function overload() {
+  R.overloads++;
+  showModal(`
+    <div class="row" style="gap:16px;flex-wrap:nowrap">${robot('alarm', 80)}<div class="stack" style="gap:6px"><div class="eyebrow" style="color:var(--alarm)">Энергия 0/3</div><h2>Перегрузка системы</h2></div></div>
+    <p>Заряды закончились, и защита сбросила все замки этого отсека. Коды замков поменялись. Энергия восстановлена до 3 зарядов.</p>
+    <p class="dim">Совет: перечитай теорию или загляни в симулятор, прежде чем пробовать снова.</p>
+    <div class="row"><button class="btn primary" data-act="reboot" data-autofocus>Перезапустить замки</button><button class="btn ghost" data-act="reboot-theory">Сначала повторить теорию</button></div>`, 'alarm');
+}
+function reboot() {
+  R.energy = 3; R.opened = [false, false, false]; R.active = 0; R.solved = false; R.feedback = null;
+  R.locks = R.sec.locks.map(g => g());
+  if (R.sec.boss) R.say = 'Ха! Все замки снова мои!';
+}
+function openDoor() {
+  renderDoorBox(true); Snd.door();
+  $('#task').innerHTML = `<div class="stack" style="align-items:center;text-align:center;padding:30px 0"><div class="eyebrow">Шлюз открывается</div><h2>Доступ разрешён</h2></div>`;
+  setTimeout(completeSector, REDUCED ? 200 : 1700);
+}
+function completeSector() {
+  const sid = R.sid, pen = R.errors + R.hints;
+  const stars = R.errors === 0 && R.hints === 0 ? 3 : pen <= 2 ? 2 : 1;
+  if (!R.practice) {
+    S.sectors[sid] = { done: true, stars, errors: R.errors, hints: R.hints, time: R.doorSec, overloads: R.overloads };
+    if (stars === 3) award('clean');
+    if (R.overloads > 0) award('phoenix');
+    if (R.doorSec < 90) award('speed');
+    if (R.sec.boss) award('boss');
+    save(); hud();
+  }
+  Snd.win();
+  const last = sid === 6;
+  showModal(`
+    <div class="stack" style="align-items:center;text-align:center;gap:10px">
+      <div class="eyebrow">${R.practice ? 'Тренировка завершена' : `Отсек ${String(sid).padStart(2, '0')} пройден`}</div>
+      <h2>${last ? 'Вирус «ЛОЖЬ» уничтожен!' : R.sec.name + ': дверь открыта'}</h2>
+      <div class="big-stars">${[0, 1, 2].map(i => starSVG(i < stars)).join('')}</div>
+      <p class="dim">${stars === 3 ? 'Идеально: ни одной ошибки и подсказки.' : stars === 2 ? 'Хорошо! Для трёх звёзд пройди отсек без ошибок и подсказок.' : 'Дверь открыта. Повтори теорию, чтобы в следующий раз ошибок было меньше.'}</p>
+    </div>
+    <div class="kv">
+      <div><b>${R.errors}</b><span>ошибок</span></div>
+      <div><b>${R.hints}</b><span>подсказок</span></div>
+      <div><b>${fmtTime(R.doorSec)}</b><span>время у двери</span></div>
+      <div><b>${R.overloads}</b><span>перегрузок</span></div>
+    </div>
+    ${R.practice ? '<p class="dim">В режиме тренировки очки и звёзды не меняются.</p>' : ''}
+    <div class="row" style="justify-content:center">
+      ${last && !R.practice ? `<button class="btn primary" data-act="finale" data-autofocus>Выйти на свободу →</button>` : !last ? `<button class="btn primary" data-act="next-sector" data-autofocus>Отсек ${String(sid + 1).padStart(2, '0')} →</button>` : ''}
+      <button class="btn ghost" data-act="map">На карту</button>
+    </div>`, 'win');
+}
+
+/* ---------- Финал ---------- */
+function b64e(str) { const b = new TextEncoder().encode(str); let s = ''; b.forEach(x => s += String.fromCharCode(x)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function b64d(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; const bin = atob(s); return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))); }
+function hash(str) { let h = 2166136261; for (const ch of str) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return (h % 1679616).toString(36).toUpperCase().padStart(4, '0'); }
+function resultCode() {
+  const d = new Date(S.finishedAt || Date.now());
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const p = [1, S.name, S.cls, S.score, S.errors, S.hints, S.elapsed, SECTORS.map(s => S.sectors[s.id]?.stars || 0).join(''), S.bestStreak, Object.keys(S.ach).length, date].join('~');
+  return `LAB-${hash(p)}-${b64e(p)}`;
+}
+function decodeCode(code) {
+  code = code.trim().replace(/\s+/g, '');
+  const m = code.match(/^LAB-([0-9A-Z]{4})-([A-Za-z0-9_-]+)$/);
+  if (!m) return { err: 'Это не похоже на код результата. Код начинается с «LAB-».' };
+  let p; try { p = b64d(m[2]); } catch (e) { return { err: 'Код повреждён: его не удалось прочитать.' }; }
+  if (hash(p) !== m[1]) return { err: 'Контрольная сумма не совпадает: код изменён или скопирован не полностью.' };
+  const f = p.split('~');
+  return { name: f[1], cls: f[2], score: +f[3], errors: +f[4], hints: +f[5], elapsed: +f[6], stars: f[7].split('').map(Number), best: +f[8], ach: +f[9], date: f[10] };
+}
+function renderFinale() {
+  if (!S.finishedAt) {
+    S.finishedAt = Date.now();
+    if (S.hints === 0) award('nohints');
+    if (starTotal() === 18) award('master');
+    save();
+  }
+  hud();
+  const ov = overallStars(), rk = rankOf(S.score);
+  $('#stage').innerHTML = `
+  <section class="finale">
+    <div class="panel stack" style="align-items:center;text-align:center;background:radial-gradient(circle at 50% 30%,color-mix(in srgb,var(--true) 18%,var(--hull)),var(--hull) 70%)">
+      <div class="float">${robot('happy', 170)}</div>
+      <div class="eyebrow">Миссия выполнена</div>
+      <h2>БИТ-8 на свободе!</h2>
+      <p>ЛОГОС: «Все шлюзы под контролем, вирус удалён. Отличная логика, ${esc(S.name)}!»</p>
+      <div class="big-stars">${[0, 1, 2].map(i => starSVG(i < ov)).join('')}</div>
+      <p class="dim">Итоговая оценка: ${ov} ${ov === 1 ? 'звезда' : 'звезды'} (${starTotal()} из 18 звёзд по отсекам)</p>
+    </div>
+    <div class="stack">
+      <div class="kv">
+        <div><b>${S.score}</b><span>очков</span></div>
+        <div><b>${S.errors}</b><span>ошибок</span></div>
+        <div><b>${S.hints}</b><span>подсказок</span></div>
+        <div><b>${fmtTime(S.elapsed)}</b><span>время</span></div>
+        <div><b>×${S.bestStreak}</b><span>лучшая серия</span></div>
+        <div><b style="font-size:16px;line-height:1.7">${rk.name}</b><span>ранг</span></div>
+      </div>
+      <div class="sector-stars">${SECTORS.map(s => `<div>S-0${s.id}<br>${starsHTML(S.sectors[s.id]?.stars || 0)}</div>`).join('')}</div>
+      <div class="panel stack">
+        <h3>Код результата для учителя</h3>
+        <p class="dim" style="font-size:14px">Скопируй код и отправь учителю. По нему учитель увидит очки, ошибки, время и звёзды. Изменить код незаметно не получится: в нём есть контрольная сумма.</p>
+        <div class="code-box"><code id="rcode">${resultCode()}</code><button class="btn small primary" data-act="copy-code">Копировать</button></div>
+      </div>
+      <div class="stack">
+        <div class="row" style="justify-content:space-between"><h3>Достижения</h3><span class="dim mono">${Object.keys(S.ach).length}/${ACH.length}</span></div>
+        <div class="ach-grid">${ACH.map(a => `<div class="ach ${S.ach[a.id] ? 'got' : ''}"><span class="ic">${a.ic}</span><span><b>${a.name}</b><span class="dim">${a.d}</span></span></div>`).join('')}</div>
+      </div>
+      <div class="row"><button class="btn" data-act="map">Карта (тренировка)</button><button class="btn ghost" data-act="reset-ask">Новая игра</button></div>
+      <div id="confirm-slot"></div>
+    </div>
+  </section>`;
+  confetti();
+}
+function confetti() {
+  if (REDUCED) return;
+  const cv = $('#confetti'), ctx = cv.getContext('2d'); cv.hidden = false;
+  cv.width = innerWidth; cv.height = innerHeight;
+  const css = getComputedStyle(document.documentElement), cols = ['--true', '--false', '--signal', '--text'].map(v => css.getPropertyValue(v).trim());
+  const P = Array.from({ length: 140 }, () => ({ x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * .5, vx: (Math.random() - .5) * 2, vy: 2 + Math.random() * 3, s: 5 + Math.random() * 6, r: Math.random() * 6, c: pick(cols), b: rnd(2) }));
+  let f = 0;
+  (function tick() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    P.forEach(p => { p.x += p.vx; p.y += p.vy; p.r += .1; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.font = `700 ${p.s * 2}px monospace`; ctx.fillText(p.b ? '1' : '0', 0, 0); ctx.restore(); });
+    if (++f < 260) requestAnimationFrame(tick); else { cv.hidden = true; }
+  })();
+}
+
+/* ---------- Экран учителя ---------- */
+function renderTeacher() {
+  $('#stage').innerHTML = `
+  <section class="stack" style="gap:20px">
+    <div class="row" style="justify-content:space-between"><div class="stack" style="gap:4px"><div class="eyebrow">Панель учителя</div><h2>Проверка результатов</h2></div><button class="btn ghost" data-act="title">← На главную</button></div>
+    <div class="panel stack">
+      <label for="t-code" class="dim">Вставьте код результата ученика</label>
+      <textarea id="t-code" rows="3" placeholder="LAB-XXXX-..."></textarea>
+      <div class="row"><button class="btn primary" data-act="decode">Расшифровать</button></div>
+      <div id="t-out"></div>
+    </div>
+    <div class="panel stack">
+      <h3>Что внутри игры</h3>
+      <div class="tt-wrap"><table class="info-table">
+        <thead><tr><th>Отсек</th><th>Тема</th><th>Замки (типы заданий)</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Высказывания: истинные, ложные, не высказывания</td><td>выбор ответа · истина/ложь · выбор ответа</td></tr>
+          <tr><td>2</td><td>Операция НЕ (инверсия)</td><td>истина/ложь · выбор ответа · пульт управления</td></tr>
+          <tr><td>3</td><td>Операция И (конъюнкция)</td><td>истина/ложь · выбор ответа · пульт управления</td></tr>
+          <tr><td>4</td><td>Операция ИЛИ (дизъюнкция)</td><td>истина/ложь · выбор ответа · таблица истинности</td></tr>
+          <tr><td>5</td><td>Порядок выполнения операций</td><td>выбор ответа · истина/ложь · пульт управления</td></tr>
+          <tr><td>6</td><td>Финальный шлюз (босс): сложные выражения</td><td>таблица истинности · пульт на 3 лампы · подбор значения X</td></tr>
+        </tbody></table></div>
+      <p class="dim" style="font-size:14px">Задания генерируются случайно: у каждого ученика свои значения переменных и выражения, а после ошибки замок меняет задание. Списать ответ у соседа не получится.</p>
+    </div>
+    <div class="panel stack">
+      <h3>Как оценивать</h3>
+      <ul style="margin:0;padding-left:20px">
+        <li>Звёзды за отсек: 3 — без ошибок и подсказок, 2 — не больше двух ошибок и подсказок вместе, 1 — отсек пройден.</li>
+        <li>Итог: 16–18 звёзд → ★★★, 11–15 → ★★, меньше 11 → ★.</li>
+        <li>Очки: +100 за замок, +50 за полное исследование симулятора, бонус за серию верных ответов, −25 за ошибку, −20 за подсказку.</li>
+      </ul>
+    </div>
+  </section>`;
+}
+
+/* ---------- Правила ---------- */
+function showRules() {
+  showModal(`
+    <div class="eyebrow">Инструкция ЛОГОСа</div><h2>Как играть</h2>
+    <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px">
+      <li><b>Отсек</b> проходится в три этапа: терминал с теорией → симулятор → дверь с тремя замками.</li>
+      <li><b>Энергия.</b> В каждом отсеке 3 заряда. Ошибка тратит заряд и включает тревогу. При 0 зарядов замки сбрасываются и меняют коды.</li>
+      <li><b>Очки.</b> +100 за замок, −25 за ошибку, −20 за подсказку, +50 за полное исследование симулятора.</li>
+      <li><b>Серия.</b> Начиная с 3 верных ответов подряд каждый следующий даёт бонус +10, +20 … до +50. Ошибка обнуляет серию.</li>
+      <li><b>Звёзды.</b> 3 звезды — отсек без ошибок и подсказок, 2 — не больше двух ошибок и подсказок вместе, 1 — отсек пройден.</li>
+      <li><b>Ранги:</b> ${RANKS.map(r => `${r[1]} (${r[0]})`).join(' → ')}.</li>
+      <li>Теорию можно повторить в любой момент. Пройденные отсеки открываются для тренировки.</li>
+      <li>В конце ты получишь <b>код результата</b> для учителя.</li>
+    </ul>
+    <div class="row"><button class="btn primary" data-act="close-modal">Понятно</button></div>`, 'wide');
+}
+
+/* ---------- Действия ---------- */
+const ACT = {
+  'continue': () => { S = store.get(SAVE_KEY); Snd.on = S.sound !== false; go(S.finishedAt ? 'finale' : 'map'); },
+  'reset-ask': () => { $('#confirm-slot').innerHTML = `<div class="confirm stack" style="margin-top:12px"><b>Начать заново?</b><span class="dim">Сохранённый прогресс${S || store.get(SAVE_KEY) ? ', очки и достижения' : ''} будут удалены.</span><div class="row"><button class="btn primary" data-act="reset-yes">Да, начать заново</button><button class="btn ghost" data-act="reset-no">Отмена</button></div></div>`; },
+  'reset-no': () => { $('#confirm-slot').innerHTML = ''; },
+  'reset-yes': () => { store.del(SAVE_KEY); S = null; R = null; go('title'); },
+  'teacher': () => go('teacher'),
+  'title': () => go('title'),
+  'intro-next': () => { const t = $('#intro-txt'); if (t && !t.dataset.done) { clearInterval(typer); t.textContent = INTRO[introI].text; t.dataset.done = '1'; return; } introI++; if (introI >= INTRO.length) return go('map'); drawIntro(); },
+  'intro-skip': () => { clearInterval(typer); go('map'); },
+  'map': () => { R = null; go('map'); },
+  'rules': () => showRules(),
+  'sound': () => { Snd.on = !Snd.on; if (S) { S.sound = Snd.on; save(); } hud(); },
+  'open-sector': el => { const sid = +el.dataset.sid; if (unlocked(sid)) enterSector(sid); },
+  'next-sector': () => { closeModal(); enterSector(R.sid + 1); },
+  'phase': el => { R.phase = el.dataset.phase; R.feedback = null; renderSector(); },
+  'scan': el => { const i = +el.dataset.i; if (R.revealed.has(i)) return; R.revealed.add(i); const k = R.scan[i].k; Snd.tone(k === 'T' ? 880 : k === 'F' ? 330 : 520, .12, 'triangle', .05); renderSim(); checkExplored($$('.scan')[i]); },
+  'sim-toggle': el => { const v = el.dataset.var; R.simEnv[v] ^= 1; R.visited.add(envKey(R.simEnv)); Snd.click(); renderSim(); checkExplored($(`[data-act="sim-toggle"][data-var="${v}"]`)); },
+  'tf': el => answer((el.dataset.v === '1') === R.locks[R.active].answer, el),
+  'opt': el => answer(+el.dataset.i === R.locks[R.active].answer, el),
+  'sw': el => { const t = R.locks[R.active]; t.env[el.dataset.var] ^= 1; t.shown = null; Snd.click(); renderTask(); },
+  'cell': el => { const t = R.locks[R.active], r = +el.dataset.r, c = +el.dataset.c, v = t.fill[r][c]; t.fill[r][c] = v === null ? 1 : v === 1 ? 0 : 1; if (t.errs) t.errs.delete(r + ':' + c); Snd.click(); renderTask(); },
+  'check': el => {
+    const t = R.locks[R.active];
+    if (t.type === 'switch') { if (t.sat(t.env)) { t.shown = { ...t.env }; } answer(t.sat(t.env), el); }
+    else if (t.type === 'table') {
+      if (t.fill.some(row => row.some(v => v === null))) { R.feedback = { cls: 'hint', title: 'Таблица не заполнена', html: 'Заполни все клетки, потом нажми «Проверить». Энергия не потрачена.' }; return renderTask(); }
+      const ok = t.rows.every((env, r) => { const vals = rowVals(t.src, env); return t.cols.every((c, ci) => t.fill[r][ci] === vals[c]); });
+      answer(ok, el);
+    }
+  },
+  'hint': el => { const t = R.locks[R.active]; if (t.hintShown) return; t.hintShown = true; R.hints++; if (!R.practice) S.hints++; addScore(-20, el); Snd.tone(440, .15, 'triangle', .05); renderTask(); },
+  'next-lock': () => { R.active = R.opened.findIndex(o => !o); R.solved = false; R.feedback = null; renderDoorBox(); renderTask(); },
+  'open-door': () => openDoor(),
+  'theory-modal': () => showModal(`<div class="eyebrow">Терминал отсека ${R.sid}</div><h2>${R.sec.name}</h2><div class="stack">${THEORY[R.sid]()}</div><div class="row"><button class="btn primary" data-act="close-modal">Вернуться к двери</button></div>`, 'wide'),
+  'close-modal': () => closeModal(),
+  'reboot': () => { reboot(); closeModal(); renderDoorBox(); renderTask(); },
+  'reboot-theory': () => { reboot(); closeModal(); R.phase = 'theory'; renderSector(); },
+  'finale': () => { R = null; go('finale'); },
+  'copy-code': el => {
+    const code = $('#rcode').textContent;
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents($('#rcode')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); el.textContent = 'Выделено: нажмите Ctrl+C'; };
+    try { navigator.clipboard.writeText(code).then(() => { el.textContent = 'Скопировано'; }, fallback); } catch (e) { fallback(); }
+  },
+  'decode': () => {
+    const d = decodeCode($('#t-code').value), out = $('#t-out');
+    if (d.err) { out.innerHTML = `<p class="err">${d.err}</p>`; return; }
+    const tot = d.stars.reduce((a, b) => a + b, 0), ov = tot >= 16 ? 3 : tot >= 11 ? 2 : 1;
+    out.innerHTML = `<div class="result-card"><div class="row" style="justify-content:space-between"><h3>${esc(d.name)}${d.cls ? ', ' + esc(d.cls) : ''}</h3>${starsHTML(ov)}</div>
+      <table><tbody>
+        <tr><td>Дата прохождения</td><td class="mono">${esc(d.date)}</td></tr>
+        <tr><td>Очки</td><td class="mono">${d.score}</td></tr>
+        <tr><td>Ранг</td><td>${rankOf(d.score).name}</td></tr>
+        <tr><td>Ошибки / подсказки</td><td class="mono">${d.errors} / ${d.hints}</td></tr>
+        <tr><td>Время</td><td class="mono">${fmtTime(d.elapsed)}</td></tr>
+        <tr><td>Звёзды по отсекам</td><td>${d.stars.map((s, i) => `<span class="mono dim">${i + 1}:</span>${starsHTML(s)}`).join(' ')}</td></tr>
+        <tr><td>Всего звёзд</td><td class="mono">${tot}/18</td></tr>
+        <tr><td>Лучшая серия / достижения</td><td class="mono">×${d.best} / ${d.ach} из ${ACH.length}</td></tr>
+      </tbody></table><p style="color:var(--true)">Код подлинный: контрольная сумма совпала.</p></div>`;
+  },
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el || el.disabled) return;
+  if (el.closest('#modal') === null && !$('#modal').hidden) return;
+  const fn = ACT[el.dataset.act]; if (fn) { e.preventDefault(); fn(el, e); }
+});
+document.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.bubble[data-act]')) { e.preventDefault(); ACT['intro-next'](); }
+});
+
+const RENDER = { title: renderTitle, intro: renderIntro, map: renderMap, sector: renderSector, finale: renderFinale, teacher: renderTeacher };
+
+/* ---------- Запуск ---------- */
+function start(data) {
+  if (data && data.S) { S = data.S; Snd.on = S.sound !== false; go(S.finishedAt ? 'finale' : 'map'); }
+  else go('title');
+}
+window.claude?.hot?.snapshot?.(() => ({ S }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
