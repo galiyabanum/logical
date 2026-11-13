@@ -368,6 +368,90 @@ blockquote{margin:6px 0 0;padding:12px 16px;border-left:4px solid var(--signal);
 .info-table th{background:var(--hull-2)}
 @media (max-width:820px){.finale{grid-template-columns:1fr}.sector-stars{grid-template-columns:repeat(3,1fr)}}
 
+/* станция */
+.station-wrap{border-radius:20px;border:1px solid var(--seam);background:radial-gradient(circle at 30% 20%,color-mix(in srgb,var(--true) 7%,var(--ink)),var(--ink) 60%);padding:8px}
+.station{display:block;width:100%;height:auto}
+.station .corr{fill:var(--hull);stroke:var(--seam);stroke-width:2}
+.station .corr.lit{fill:color-mix(in srgb,var(--true) 10%,var(--hull))}
+.station .dleaf{fill:var(--alarm);transition:transform .9s cubic-bezier(.7,0,.3,1),fill .6s}
+.station .door-g.open .dleaf{fill:var(--true);transform:translate(var(--dx),var(--dy))}
+.station .floor{fill:var(--hull);stroke:var(--seam);stroke-width:2;transition:fill .15s}
+.station .room.avail .floor{stroke:var(--signal);stroke-width:3;animation:roomglow 2s ease-in-out infinite}
+.station .room.done .floor{stroke:var(--true);stroke-width:2.5}
+.station .room.boss .floor{fill:color-mix(in srgb,var(--alarm) 9%,var(--hull))}
+.station .room.locked{opacity:.5}
+.station .room[data-act]{cursor:pointer}
+.station .room[data-act]:hover .floor{fill:var(--hull-2)}
+.station .room:focus{outline:none}
+.station .room:focus-visible .floor{stroke:var(--signal);stroke-width:5}
+.station .rcode{font:500 11px var(--f-mono);fill:var(--dim);letter-spacing:.12em}
+.station .room.avail .rcode{fill:var(--signal)}
+.station .room.done .rcode{fill:var(--true)}
+.station .rname{font:700 18px var(--f-display);fill:var(--text)}
+.station .rsub{font:13px var(--f-body);fill:var(--dim)}
+.station .gicon rect,.station .gicon circle{fill:var(--ink);stroke:var(--dim);stroke-width:2}
+.station .gicon path{stroke:var(--dim);stroke-width:2;fill:none}
+.station .gicon text{font:700 15px var(--f-mono);fill:var(--signal);text-anchor:middle}
+.station .room.done .gicon rect,.station .room.done .gicon circle,.station .room.done .gicon path{stroke:var(--true)}
+.station .scanline{stroke:var(--true)!important;animation:scan 2s ease-in-out infinite}
+.station .padlock rect{fill:var(--hull-2);stroke:var(--dim);stroke-width:2}
+.station .padlock path{fill:none;stroke:var(--dim);stroke-width:3}
+.station .exitg rect{fill:var(--hull);stroke:var(--seam);stroke-width:2;stroke-dasharray:6 5}
+.station .exitg text{font:700 15px var(--f-display);fill:var(--dim);text-anchor:middle;letter-spacing:.1em}
+.station .exitg.open rect{fill:color-mix(in srgb,var(--true) 22%,var(--hull));stroke:var(--true);stroke-dasharray:none}
+.station .exitg.open text{fill:var(--true)}
+.station .shadow{fill:var(--ink);opacity:.7}
+#bot.walking .bob{animation:bob .32s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px)}}
+@keyframes roomglow{50%{stroke:color-mix(in srgb,var(--signal) 45%,var(--seam))}}
+@keyframes scan{50%{transform:translateY(20px)}}
+/* логическая схема */
+.circ-wrap{overflow-x:auto;max-width:100%}
+.circuit{display:block;max-width:100%;height:auto}
+.circuit .wire{fill:none;stroke-width:4;stroke-linejoin:round;stroke-linecap:round}
+.circuit .w1{stroke:var(--true);stroke-dasharray:10 6;animation:flow .5s linear infinite}
+.circuit .w0{stroke:var(--false);opacity:.75}
+.circuit .wq{stroke:var(--dim)}
+@keyframes flow{to{stroke-dashoffset:-16}}
+.circuit .gate rect{fill:var(--hull-2);stroke:var(--text);stroke-width:2.5}
+.circuit .gate circle{fill:var(--hull-2);stroke:var(--text);stroke-width:2.5}
+.circuit .gate text{font:700 20px var(--f-mono);fill:var(--signal);text-anchor:middle}
+.circuit .pin rect{fill:var(--ink);stroke:var(--seam);stroke-width:2}
+.circuit .pin.tap{cursor:pointer}
+.circuit .pin.tap:hover rect,.circuit .pin.tap:focus-visible rect{stroke:var(--signal)}
+.circuit .pin:focus{outline:none}
+.circuit .pl{font:700 17px var(--f-mono);fill:var(--text);text-anchor:middle}
+.circuit .pv{font:700 17px var(--f-mono);text-anchor:middle}
+.circuit .pv.v1{fill:var(--true)} .circuit .pv.v0{fill:var(--false)}
+.circuit .clamp{fill:var(--hull-2);stroke:var(--seam);stroke-width:3}
+.circuit .clamp.on{fill:var(--true);stroke:var(--true);filter:drop-shadow(0 0 8px var(--true))}
+.circuit .clamp.off{stroke:var(--false)}
+/* конструктор */
+.build-line{min-height:58px;padding:12px;border-radius:12px;border:2px solid var(--seam);background:var(--ink);display:flex;align-items:center;font-size:18px}
+.build-line.empty{color:var(--dim);font-size:14px;border-style:dashed}
+.build-line .expr{border:0;background:transparent;font-size:20px}
+.palette{display:flex;flex-wrap:wrap;gap:8px}
+.tok{min-width:52px;padding:10px 14px;border-radius:10px;border:2px solid var(--seam);background:var(--hull-2);font-family:var(--f-mono);font-weight:700;font-size:17px}
+.tok:hover{border-color:var(--signal)}
+.tok.to{color:var(--signal)} .tok.tx{font-family:var(--f-body);font-size:14px;color:var(--dim)}
+/* ставка уверенности */
+.bet{display:flex;gap:12px;align-items:center;text-align:left;padding:10px 14px;border-radius:12px;border:1px dashed var(--seam);background:transparent;font-size:14px}
+.bet b{display:block;font-size:14px}
+.bet:hover{border-color:var(--signal)}
+.bet-knob{flex:none;width:40px;height:22px;border-radius:999px;background:var(--ink);border:2px solid var(--seam);position:relative}
+.bet-knob::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--dim);transition:left .15s}
+.bet.on{border-style:solid;border-color:var(--signal);background:color-mix(in srgb,var(--signal) 8%,transparent)}
+.bet.on .bet-knob::after{left:20px;background:var(--signal)}
+/* рефлексия и аналитика */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chipbtn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:2px solid var(--seam);background:var(--hull-2);font-size:14px}
+.chipbtn i{width:12px;height:12px;border-radius:50%;background:var(--c)}
+.chipbtn:hover{border-color:var(--c)}
+.chipbtn.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 16%,var(--hull-2))}
+.heat{display:flex;gap:4px;flex-wrap:wrap}
+.heat span{display:flex;flex-direction:column;align-items:center;min-width:38px;padding:4px;border-radius:8px;font-family:var(--f-mono);background:color-mix(in srgb,var(--alarm) calc(var(--a) * 70%),var(--hull-2))}
+.heat b{font-size:10px;color:var(--dim)}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
@@ -512,8 +596,14 @@ function robot(mood = 'ok', w = 110) {
   const eyes = mood === 'happy'
     ? `<path d="M40 58 q7 -10 14 0 M66 58 q7 -10 14 0" stroke="${eye}" stroke-width="4" fill="none" stroke-linecap="round"/>`
     : `<rect x="40" y="47" width="14" height="13" rx="4" fill="${eye}"/><rect x="66" y="47" width="14" height="13" rx="4" fill="${eye}"/>`;
-  return `<svg class="robot ${mood}" viewBox="0 0 120 150" width="${w}" aria-hidden="true">
-  <line x1="60" y1="12" x2="60" y2="28" stroke="var(--dim)" stroke-width="3"/>
+  return `<svg class="robot ${mood}" viewBox="0 0 120 150" width="${w}" aria-hidden="true">${robotInner(mood)}</svg>`;
+}
+function robotInner(mood = 'ok') {
+  const eye = mood === 'alarm' ? 'var(--alarm)' : 'var(--true)';
+  const eyes = mood === 'happy'
+    ? `<path d="M40 58 q7 -10 14 0 M66 58 q7 -10 14 0" stroke="${eye}" stroke-width="4" fill="none" stroke-linecap="round"/>`
+    : `<rect x="40" y="47" width="14" height="13" rx="4" fill="${eye}"/><rect x="66" y="47" width="14" height="13" rx="4" fill="${eye}"/>`;
+  return `<line x1="60" y1="12" x2="60" y2="28" stroke="var(--dim)" stroke-width="3"/>
   <circle class="ant" cx="60" cy="10" r="6" fill="${mood === 'alarm' ? 'var(--alarm)' : 'var(--signal)'}"/>
   <rect x="13" y="44" width="11" height="22" rx="4" fill="var(--seam)"/><rect x="96" y="44" width="11" height="22" rx="4" fill="var(--seam)"/>
   <rect x="22" y="28" width="76" height="56" rx="16" fill="var(--hull-2)" stroke="var(--seam)" stroke-width="3"/>
@@ -522,12 +612,12 @@ function robot(mood = 'ok', w = 110) {
   <text x="60" y="113" text-anchor="middle" font-family="JetBrains Mono, monospace" font-weight="700" font-size="11" fill="var(--signal)">БИТ-8</text>
   <rect x="17" y="95" width="15" height="8" rx="4" fill="var(--seam)"/><rect x="88" y="95" width="15" height="8" rx="4" fill="var(--seam)"/>
   <rect x="32" y="130" width="56" height="15" rx="7.5" fill="var(--seam)"/>
-  <circle cx="44" cy="137.5" r="4" fill="var(--hull)"/><circle cx="60" cy="137.5" r="4" fill="var(--hull)"/><circle cx="76" cy="137.5" r="4" fill="var(--hull)"/></svg>`;
+  <circle cx="44" cy="137.5" r="4" fill="var(--hull)"/><circle cx="60" cy="137.5" r="4" fill="var(--hull)"/><circle cx="76" cy="137.5" r="4" fill="var(--hull)"/>`;
 }
 const virusSVG = `<svg viewBox="0 0 80 80" width="58" height="58" class="virus-ico" aria-hidden="true"><path d="M40 4 L48 17 L63 11 L61 27 L76 34 L63 44 L71 59 L55 58 L50 75 L40 63 L29 75 L25 58 L9 60 L17 44 L4 34 L19 27 L17 11 L32 17 Z" fill="var(--alarm)"/><rect x="26" y="33" width="10" height="9" rx="2" fill="var(--ink)"/><rect x="45" y="33" width="10" height="9" rx="2" fill="var(--ink)"/><path d="M27 53 L33 48 L40 53 L47 48 L53 53" stroke="var(--ink)" stroke-width="3.5" fill="none" stroke-linejoin="round"/></svg>`;
 
 /* ---------- Конструкторы заданий ---------- */
-const KIND = { tf: 'ИСТИНА / ЛОЖЬ', choice: 'ВЫБОР ОТВЕТА', switch: 'ПУЛЬТ УПРАВЛЕНИЯ', table: 'ТАБЛИЦА ИСТИННОСТИ' };
+const KIND = { tf: 'ИСТИНА / ЛОЖЬ', choice: 'ВЫБОР ОТВЕТА', switch: 'ПУЛЬТ УПРАВЛЕНИЯ', table: 'ТАБЛИЦА ИСТИННОСТИ', build: 'КОНСТРУКТОР ВЫРАЖЕНИЙ' };
 function tfValue(srcs, hint) {
   const src = pick(srcs), env = randEnv(varsOf(src)), v = value(src, env), claim = rnd(2) ? v : 1 - v, ok = claim === v;
   return {
@@ -567,6 +657,68 @@ function solvableSwitch(pool, count, q, hint) {
     if (n >= 1 && n <= 2) return switchTask(q, lamps, hint);
   }
   return switchTask(q, [{ src: 'A ИЛИ B', target: 1 }, { src: 'НЕ (A И B)', target: 1 }, { src: 'B И НЕ C', target: 1 }], hint);
+}
+
+/* ---------- Конструктор выражений ---------- */
+const BUILD = [
+  { text: 'Сигнал тревоги включается, если сработал датчик A <b>или</b> датчик B, но только когда <b>не</b> включён режим тишины C.', src: '(A ИЛИ B) И НЕ C' },
+  { text: 'Дверь открывается, если приложена карта A <b>и</b> введён код B, <b>или</b> если нажата аварийная кнопка C.', src: 'A И B ИЛИ C' },
+  { text: 'Полив включается, если почва сухая (A) <b>и не</b> идёт дождь (B — «идёт дождь»), <b>или</b> если включён ручной режим (C).', src: 'A И НЕ B ИЛИ C' },
+  { text: 'Лампа горит, если <b>ни один</b> из выключателей A и B не нажат.', src: 'НЕ (A ИЛИ B)' },
+  { text: 'Робот едет вперёд, если путь свободен (A), батарея <b>не</b> разряжена (B — «батарея разряжена») <b>и</b> нет команды «стоп» (C — «команда стоп»).', src: 'A И НЕ B И НЕ C' },
+  { text: 'Свет в лаборатории горит, если включён рубильник A <b>и</b> при этом нажата кнопка B <b>или</b> кнопка C.', src: 'A И (B ИЛИ C)' },
+];
+function buildTask() {
+  const b = pick(BUILD), vars = varsOf(b.src);
+  return {
+    type: 'build', src: b.src, vars, seq: [],
+    q: `Собери логическое выражение по условию:<blockquote>${b.text}</blockquote>`,
+    hint: 'Ищи в условии союзы «и», «или» и частицу «не». Если ИЛИ должно выполниться раньше И, возьми его в скобки.',
+    explain: seq => `<p>Твоё выражение: ${exprHTML(seq.join(' '))}. Эталон: ${exprHTML(b.src)}. Они дают одинаковый результат во всех ${1 << vars.length} строках таблицы истинности, то есть равносильны.</p>${ttable(b.src)}<p class="dim">Засчитывается любое равносильное выражение. Например, ${exprHTML('НЕ (A ИЛИ B)')} и ${exprHTML('НЕ A И НЕ B')} равносильны.</p>`,
+  };
+}
+
+/* ---------- Логическая схема (элементы по ГОСТ: & — И, 1 — ИЛИ, 1 с кружком — НЕ) ---------- */
+function evalAst(n, env) {
+  if (n.t === 'v') return env[n.n]; if (n.t === 'c') return n.v;
+  if (n.t === 'not') return evalAst(n.a, env) ? 0 : 1;
+  const a = evalAst(n.a, env), b = evalAst(n.b, env);
+  return n.t === 'and' ? (a && b ? 1 : 0) : (a || b ? 1 : 0);
+}
+function circuitSVG(src, env, interactive = false) {
+  const ast = parse(src), leaves = [], GW = 50, COL = 104, ROW = 58, X0 = 74;
+  let maxH = 0;
+  const lay = n => {
+    if (n.t === 'v' || n.t === 'c') { n.h = 0; n.y = leaves.length * ROW + 34; leaves.push(n); return; }
+    const kids = n.t === 'not' ? [n.a] : [n.a, n.b]; kids.forEach(lay);
+    n.h = Math.max(...kids.map(k => k.h)) + 1; n.y = kids.reduce((s, k) => s + k.y, 0) / kids.length; maxH = Math.max(maxH, n.h);
+  };
+  lay(ast);
+  const val = n => env ? evalAst(n, env) : null;
+  const wc = v => v === null ? 'wq' : v ? 'w1' : 'w0';
+  let wires = '', gates = '', pins = '';
+  const draw = n => {
+    if (n.t === 'v' || n.t === 'c') {
+      n.ox = X0; const v = val(n);
+      const lbl = n.t === 'v' ? n.n : n.v;
+      pins += `<g class="pin ${interactive && n.t === 'v' ? 'tap' : ''}" ${interactive && n.t === 'v' ? `data-act="sim-toggle" data-var="${n.n}" role="button" tabindex="0" aria-label="Переключить ${n.n}"` : ''}>
+        <rect x="6" y="${n.y - 16}" width="52" height="32" rx="8"/><text x="22" y="${n.y + 5}" class="pl">${lbl}</text>${v === null ? '' : `<text x="46" y="${n.y + 5}" class="pv v${v}">${v}</text>`}</g>`;
+      wires += `<path class="wire ${wc(v)}" d="M58 ${n.y} H${X0}"/>`;
+      return;
+    }
+    const kids = n.t === 'not' ? [n.a] : [n.a, n.b]; kids.forEach(draw);
+    const gx = X0 + (n.h - 1) * COL + 34, h = n.t === 'not' ? 36 : 52, top = n.y - h / 2;
+    const ins = n.t === 'not' ? [n.y] : [n.y - 13, n.y + 13];
+    kids.forEach((k, i) => { const mx = gx - 16; wires += `<path class="wire ${wc(val(k))}" d="M${k.ox} ${k.y} H${mx} V${ins[i]} H${gx}"/>`; });
+    const v = val(n), inv = n.t === 'not';
+    gates += `<g class="gate"><rect x="${gx}" y="${top}" width="${GW}" height="${h}" rx="4"/><text x="${gx + GW / 2}" y="${n.y + 6}">${n.t === 'and' ? '&amp;' : '1'}</text>${inv ? `<circle cx="${gx + GW + 5}" cy="${n.y}" r="5"/>` : ''}<title>${OPN[n.t]}</title></g>`;
+    n.ox = gx + GW + (inv ? 10 : 0);
+  };
+  draw(ast);
+  const outX = ast.ox, v = val(ast), W = outX + 70, H = Math.max(76, leaves.length * ROW + 10);
+  wires += `<path class="wire ${wc(v)}" d="M${outX} ${ast.y} H${outX + 30}"/>`;
+  const lamp = `<circle class="clamp ${v === null ? '' : v ? 'on' : 'off'}" cx="${outX + 44}" cy="${ast.y}" r="14"/>`;
+  return `<div class="circ-wrap"><svg class="circuit" viewBox="0 0 ${W} ${H}" width="${W}" role="img" aria-label="Логическая схема выражения ${src}">${wires}${gates}${pins}${lamp}</svg></div>`;
 }
 
 /* ---------- Банки заданий ---------- */
@@ -614,18 +766,21 @@ const THEORY = {
     <p><b>Инверсия</b> (логическое отрицание, операция <span class="op-name">НЕ</span>) меняет значение высказывания на противоположное.</p>
     <div class="notation"><span>НЕ A</span><span>¬A</span><span>Ā</span><span>not A</span></div>
     ${ttable('НЕ A')}
+    <p>В электронике операцию выполняет логический элемент (вентиль) «НЕ». На схемах по ГОСТ он обозначается прямоугольником с цифрой 1 и кружком на выходе:</p>${circuitSVG('НЕ A')}
     <div class="rule">НЕ 1 = 0, НЕ 0 = 1. Двойное отрицание возвращает исходное значение: НЕ (НЕ A) = A.</div>
     <p class="life"><b>Пример.</b> A = «Дверь открыта». НЕ A = «Дверь не открыта». Если дверь открыта (A = 1), то НЕ A = 0.</p>`,
   3: () => `
     <p><b>Конъюнкция</b> (логическое умножение, операция <span class="op-name">И</span>) истинна <b>только тогда, когда оба</b> высказывания истинны.</p>
     <div class="notation"><span>A И B</span><span>A ∧ B</span><span>A &amp; B</span><span>A · B</span><span>A and B</span></div>
     ${ttable('A И B')}
+    <p>Логический элемент «И» на схеме обозначается знаком &amp;:</p>${circuitSVG('A И B')}
     <div class="rule">Похоже на умножение: 1 · 1 = 1, а если есть хоть один 0, результат 0.</div>
     <p class="life"><b>Пример.</b> Сейф открывается, если приложена ключ-карта <b>И</b> введён верный код. Одной карты мало.</p>`,
   4: () => `
     <p><b>Дизъюнкция</b> (логическое сложение, операция <span class="op-name">ИЛИ</span>) ложна <b>только тогда, когда оба</b> высказывания ложны.</p>
     <div class="notation"><span>A ИЛИ B</span><span>A ∨ B</span><span>A | B</span><span>A + B</span><span>A or B</span></div>
     ${ttable('A ИЛИ B')}
+    <p>Логический элемент «ИЛИ» на схеме обозначается цифрой 1 (по ГОСТ):</p>${circuitSVG('A ИЛИ B')}
     <div class="rule">Логическое ИЛИ не исключающее: 1 ИЛИ 1 = 1. Похоже на сложение, только 1 + 1 здесь тоже 1.</div>
     <p class="life"><b>Пример.</b> Свет в коридоре включается кнопкой у входа <b>ИЛИ</b> кнопкой у выхода. Хватит любой.</p>`,
   5: () => `
@@ -634,6 +789,7 @@ const THEORY = {
     <p>Как в арифметике: И похоже на умножение, ИЛИ на сложение, поэтому И выполняется раньше ИЛИ.</p>
     <p><b>Пример.</b> ${exprHTML('НЕ A ИЛИ B И C')} при ${envStr({ A: 1, B: 1, C: 0 })}:</p>
     ${stepsHTML('НЕ A ИЛИ B И C', { A: 1, B: 1, C: 0 })}
+    <p>Порядок действий хорошо виден на логической схеме: сигнал проходит элементы слева направо.</p>${circuitSVG('НЕ A ИЛИ B И C', { A: 1, B: 1, C: 0 })}
     <p class="life"><b>Ловушка.</b> ${exprHTML('НЕ (A ИЛИ B)')} и ${exprHTML('НЕ A ИЛИ B')} — разные выражения. В первом НЕ применяется к результату скобки.</p>`,
   6: () => `
     <p><b>Таблица истинности</b> показывает значение выражения при всех наборах значений переменных.</p>
@@ -694,7 +850,7 @@ const SECTORS = [
         return choice(`В каком порядке выполняются операции в выражении ${exprHTML(src)}?`, ops, shuffle(PERMS.filter(p => p !== ops)).slice(0, 3), 'Сначала скобки, затем НЕ, затем И, последним ИЛИ.', `<p>Порядок: скобки → НЕ → И → ИЛИ. Для этого выражения шаги такие:</p><ol class="steps">${stepCols(src).map(c => `<li>${exprHTML(c)}</li>`).join('')}</ol>`);
       },
       () => tfValue(ORDER, 'Порядок: скобки → НЕ → И → ИЛИ. Считай по шагам и записывай промежуточные результаты.'),
-      () => { const src = pick(ORDER), target = rnd(2); return switchTask(`Сделай так, чтобы лампа ${target ? '<b>загорелась</b>' : '<b>погасла</b>'}: выражение должно стать равным ${bit(target)}.`, [{ src, target }], 'Найди операцию, которая выполняется последней. Например, если последним идёт ИЛИ, для 1 хватит одной истинной части, а для 0 обе части должны быть ложны.'); },
+      () => buildTask(),
     ] },
   { id: 6, name: 'Финальный шлюз', place: 'Логово вируса «ЛОЖЬ»', boss: true, sim: { src: '(A ИЛИ B) И НЕ C', legend: { A: 'датчик движения 1', B: 'датчик движения 2', C: 'режим «тишина»' }, out: 'Сигнал тревоги' },
     simIntro: 'Это настоящая схема сигнализации шлюза. Тревога звучит, если сработал хотя бы один датчик и не включён режим тишины. Изучи все 8 наборов.',
@@ -735,7 +891,15 @@ const HITS = ['АРГХ! Защита пробита!', 'Невозможно…
 let S = null;      // сохраняемое состояние игры
 let R = null;      // состояние текущего отсека
 let screen = 'title';
-const newState = (name, cls) => ({ v: 1, name, cls, startedAt: Date.now(), elapsed: 0, score: 0, errors: 0, hints: 0, streak: 0, bestStreak: 0, ach: {}, sectors: {}, explored: {}, current: 1, finishedAt: null, sound: Snd.on });
+const newState = (name, cls) => migrate({ v: 1, name, cls, startedAt: Date.now(), elapsed: 0, score: 0, errors: 0, hints: 0, streak: 0, bestStreak: 0, ach: {}, sectors: {}, explored: {}, current: 1, finishedAt: null, sound: Snd.on });
+function migrate(st) {
+  st.pos ??= st.finishedAt ? 7 : (st.current || 1);
+  st.justOpened ??= null;
+  st.conf ??= { n: 0, ok: 0 };
+  st.secErr ??= {};
+  st.reflect ??= { mood: null, topic: null };
+  return st;
+}
 const save = () => { if (S) store.set(SAVE_KEY, S); };
 const doneCount = () => SECTORS.filter(s => S.sectors[s.id]?.done).length;
 const starTotal = () => SECTORS.reduce((a, s) => a + (S.sectors[s.id]?.stars || 0), 0);
@@ -885,15 +1049,116 @@ function typeText(el, text) {
 }
 
 /* ---------- Экран: карта ---------- */
+/* --- станция: план отсеков с коридорами и дверями, по которому ходит робот --- */
+let curL = null, walking = false, mapPlan = null;
+function mapLayout() {
+  const w = $('#stage').clientWidth || innerWidth;
+  if (w >= 700) {
+    const pos = [[20, 30], [355, 30], [690, 30], [690, 300], [355, 300], [20, 300]];
+    return { wide: true, W: 1000, H: 600, rw: 290, rh: 150, rooms: pos.map(([x, y]) => ({ x, y })), exit: { x: 165, y: 546 } };
+  }
+  const rooms = Array.from({ length: 6 }, (_, i) => ({ x: 20, y: 20 + i * 190 }));
+  return { wide: false, W: 340, H: 1262, rw: 300, rh: 150, rooms, exit: { x: 170, y: 1210 } };
+}
+const nodeC = (L, i) => i === 6 ? L.exit : { x: L.rooms[i].x + L.rw / 2, y: L.rooms[i].y + L.rh / 2 };
+const anchorPt = (L, i) => i === 6 ? L.exit : { x: L.rooms[i].x + L.rw * .62, y: L.rooms[i].y + L.rh - 36 };
+function doorPt(L, d) {
+  const a = L.rooms[d];
+  if (d === 5) return { x: L.exit.x, y: (a.y + L.rh + L.exit.y - 24) / 2, vert: true, from: a.y + L.rh, to: L.exit.y - 24 };
+  const b = L.rooms[d + 1];
+  if (a.y === b.y) { const l = a.x < b.x ? a : b, r = a.x < b.x ? b : a; return { x: (l.x + L.rw + r.x) / 2, y: a.y + L.rh / 2, vert: false, from: l.x + L.rw, to: r.x }; }
+  const t = a.y < b.y ? a : b, u = a.y < b.y ? b : a;
+  return { x: a.x + L.rw / 2, y: (t.y + L.rh + u.y) / 2, vert: true, from: t.y + L.rh, to: u.y };
+}
+function roomPath(L, a, b) {
+  const pts = [anchorPt(L, a)];
+  if (a === b) return pts;
+  pts.push(nodeC(L, a));
+  const st = b > a ? 1 : -1;
+  for (let i = a; i !== b; i += st) { pts.push(doorPt(L, Math.min(i, i + st))); pts.push(nodeC(L, i + st)); }
+  pts.push(anchorPt(L, b));
+  return pts;
+}
+function roomIcon(id) {
+  const gate = (lbl, inv, two) => `<g class="gicon">${two ? '<path d="M0 16 H12 M0 36 H12"/>' : '<path d="M0 26 H12"/>'}<rect x="12" y="6" width="26" height="40" rx="3"/><text x="25" y="32">${lbl}</text>${inv ? '<circle cx="42" cy="26" r="4"/><path d="M46 26 H54"/>' : '<path d="M38 26 H54"/>'}</g>`;
+  if (id === 1) return `<g class="gicon"><rect x="2" y="8" width="50" height="38" rx="6"/><text x="27" y="33">1 0 ?</text><path class="scanline" d="M6 18 H48"/></g>`;
+  if (id === 2) return gate('1', true, false);
+  if (id === 3) return gate('&amp;', false, true);
+  if (id === 4) return gate('1', false, true);
+  if (id === 5) return `<g class="gicon"><rect x="2" y="8" width="50" height="38" rx="6"/><text x="27" y="33" style="font-size:12px">( ) НЕ</text></g>`;
+  return `<g transform="scale(.66)">${virusSVG.replace(/^<svg[^>]*>/, '').replace('</svg>', '')}</g>`;
+}
+function stationSVG(L) {
+  let corr = '', doors = '', rooms = '', defs = '';
+  for (let d = 0; d < 6; d++) {
+    const p = doorPt(L, d), open = !!S.sectors[d + 1]?.done && S.justOpened !== d + 1;
+    const cw = 46, r = p.vert ? { x: p.x - cw / 2, y: p.from, w: cw, h: p.to - p.from } : { x: p.from, y: p.y - cw / 2, w: p.to - p.from, h: cw };
+    corr += `<rect class="corr ${S.sectors[d + 1]?.done ? 'lit' : ''}" x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"/>`;
+    defs += `<clipPath id="cp${d}"><rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"/></clipPath>`;
+    const leaves = p.vert
+      ? `<rect class="dleaf" style="--dx:-21px;--dy:0px" x="${p.x - 23}" y="${p.y - 5}" width="23" height="10"/><rect class="dleaf" style="--dx:21px;--dy:0px" x="${p.x}" y="${p.y - 5}" width="23" height="10"/>`
+      : `<rect class="dleaf" style="--dx:0px;--dy:-21px" x="${p.x - 5}" y="${p.y - 23}" width="10" height="23"/><rect class="dleaf" style="--dx:0px;--dy:21px" x="${p.x - 5}" y="${p.y}" width="10" height="23"/>`;
+    doors += `<g class="door-g ${open ? 'open' : ''}" id="sdoor-${d}" clip-path="url(#cp${d})">${leaves}</g>`;
+  }
+  SECTORS.forEach((s, i) => {
+    const r = L.rooms[i], st = S.sectors[s.id], open = unlocked(s.id), cls = st?.done ? 'done' : open ? 'avail' : 'locked', a = anchorPt(L, i);
+    rooms += `<g class="room ${cls} ${s.boss ? 'boss' : ''}" ${open ? `data-act="open-sector" data-sid="${s.id}" role="button" tabindex="0" aria-label="Отсек ${s.id}: ${s.name}${st?.done ? ', пройден' : ''}"` : `aria-label="Отсек ${s.id}: ${s.name}, заблокирован"`}>
+      <rect class="floor" x="${r.x}" y="${r.y}" width="${L.rw}" height="${L.rh}" rx="18"/>
+      <text class="rcode" x="${r.x + 18}" y="${r.y + 30}">ОТСЕК 0${s.id}${st?.done ? ' · ПРОЙДЕН' : open ? ' · ДОСТУПЕН' : ''}</text>
+      <text class="rname" x="${r.x + 18}" y="${r.y + 58}">${s.name}</text>
+      <text class="rsub" x="${r.x + 18}" y="${r.y + 80}">${s.place}</text>
+      <g transform="translate(${r.x + 16} ${r.y + L.rh - 34}) scale(.8)">${[0, 1, 2].map(k => `<g class="star ${k < (st?.stars || 0) ? 'on' : ''}" transform="translate(${k * 26} 0)"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 20.9l1.6-7L2 9.2l7.1-.6z"/></g>`).join('')}</g>
+      <g transform="translate(${r.x + L.rw - 72} ${r.y + L.rh - 62})">${roomIcon(s.id)}</g>
+      ${!open ? `<g class="padlock" transform="translate(${a.x} ${a.y})"><path d="M-8 -6 v-7 a8 8 0 0 1 16 0 v7"/><rect x="-13" y="-6" width="26" height="20" rx="4"/></g>` : ''}
+    </g>`;
+  });
+  const done6 = !!S.sectors[6]?.done;
+  const exit = `<g class="exitg ${done6 ? 'open' : ''}"><rect x="${L.exit.x - 70}" y="${L.exit.y - 24}" width="140" height="48" rx="12"/><text x="${L.exit.x}" y="${L.exit.y + 6}">ВЫХОД</text></g>`;
+  const p0 = S.pos === 7 ? L.exit : anchorPt(L, Math.min(5, Math.max(0, S.pos - 1)));
+  const bot = `<g id="bot" style="transform:translate(${p0.x}px,${p0.y}px)"><g class="bob"><ellipse class="shadow" cx="0" cy="28" rx="18" ry="4"/><g transform="translate(-22 -27.5) scale(.3667)">${robotInner('ok')}</g></g></g>`;
+  return `<svg class="station" viewBox="0 0 ${L.W} ${L.H}" role="group" aria-label="План станции: шесть отсеков и выход"><defs>${defs}</defs>${corr}${doors}${rooms}${exit}${bot}</svg>`;
+}
+function setBot(p) { const b = $('#bot'); if (b) b.style.transform = `translate(${p.x}px,${p.y}px)`; }
+function walk(path, done) {
+  const bot = $('#bot');
+  if (!bot || path.length < 2 || REDUCED) { if (path.length) setBot(path[path.length - 1]); return done && done(); }
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  let total = 0; for (let i = 1; i < path.length; i++) total += dist(path[i - 1], path[i]);
+  let acc = 0;
+  const kf = path.map((p, i) => { if (i) acc += dist(path[i - 1], p); return { transform: `translate(${p.x}px,${p.y}px)`, offset: total ? acc / total : 1 }; });
+  const dur = Math.min(4200, Math.max(700, total * 2.6));
+  bot.classList.add('walking');
+  const steps = setInterval(() => Snd.tone(160, .04, 'square', .02), 190);
+  const anim = bot.animate(kf, { duration: dur, easing: 'ease-in-out', fill: 'forwards' });
+  anim.onfinish = () => { clearInterval(steps); setBot(path[path.length - 1]); anim.cancel(); bot.classList.remove('walking'); done && done(); };
+}
+function runMapPlan() {
+  const plan = mapPlan; mapPlan = null;
+  const L = curL, d = S.justOpened;
+  const proceed = () => {
+    if (!plan) return;
+    walking = true;
+    const target = plan.to === 'exit' ? 6 : plan.to - 1, from = S.pos - 1;
+    setTimeout(() => walk(roomPath(L, from, target), () => {
+      walking = false;
+      if (plan.to === 'exit') { S.pos = 7; save(); go('finale'); } else { S.pos = plan.to; save(); enterSector(plan.to); }
+    }), 250);
+  };
+  if (d != null) {
+    S.justOpened = null; save();
+    const g = $(`#sdoor-${d - 1}`);
+    setTimeout(() => { if (g) g.classList.add('open'); Snd.door(); toast('Шлюз открыт', `Проход из отсека ${d} ${d < 6 ? 'в отсек ' + (d + 1) : 'к выходу'} свободен.`); setTimeout(proceed, REDUCED ? 0 : 1000); }, 400);
+  } else proceed();
+}
 function renderMap() {
-  const cur = SECTORS.find(s => unlocked(s.id) && !S.sectors[s.id]?.done)?.id || 6;
+  curL = mapLayout();
   const rk = rankOf(S.score), pct = rk.next ? Math.round((S.score - rk.from) / (rk.next[0] - rk.from) * 100) : 100;
   const done = doneCount();
   $('#stage').innerHTML = `
   <section class="stack" style="gap:22px">
     <div class="map-head">
       <div class="stack" style="gap:6px">
-        <div class="eyebrow">Схема станции</div>
+        <div class="eyebrow">План станции «Логос-8»</div>
         <h2>Карта отсеков</h2>
       </div>
       <div class="stack" style="gap:6px;flex:1;min-width:220px;max-width:420px">
@@ -901,18 +1166,8 @@ function renderMap() {
         <div class="progress"><i style="width:${done / 6 * 100}%"></i></div>
       </div>
     </div>
-    <div class="map">
-      ${SECTORS.map(s => {
-        const st = S.sectors[s.id], open = unlocked(s.id), cls = st?.done ? 'done' : open ? 'avail' : 'locked';
-        return `<button class="node ${cls} ${s.boss ? 'boss' : ''}" data-act="open-sector" data-sid="${s.id}" ${open ? '' : 'disabled aria-disabled="true"'}>
-          ${s.id === cur && open && !S.finishedAt ? `<span class="here float">${robot('ok', 46)}</span>` : ''}
-          <span class="code">ОТСЕК ${String(s.id).padStart(2, '0')} · ${s.place.toUpperCase()}</span>
-          <h3>${s.name}</h3>
-          <span class="sub">${s.boss ? 'Босс: вирус «ЛОЖЬ»' : '3 замка · теория · симулятор'}</span>
-          <span class="foot">${starsHTML(st?.stars || 0)}<span class="chip">${st?.done ? 'Пройден' : open ? 'Доступен' : 'Заблокирован'}</span></span>
-        </button>`;
-      }).join('')}
-    </div>
+    <div class="station-wrap">${stationSVG(curL)}</div>
+    <p class="dim" style="font-size:14px">Нажми на доступный отсек, и БИТ-8 сам дойдёт до него по коридорам. Красные створки — запертые шлюзы, бирюзовые — открытые.</p>
     ${S.finishedAt ? `<div class="panel row" style="justify-content:space-between"><div><b>Лаборатория пройдена!</b> <span class="dim">Отсеки можно проходить повторно в режиме тренировки, очки при этом не меняются.</span></div><button class="btn primary" data-act="finale">Итоги и код результата</button></div>` : ''}
     <div class="panel stack">
       <div class="row" style="justify-content:space-between"><h3>Ранг: <span style="color:var(--signal)">${rk.name}</span></h3><span class="dim mono">${rk.next ? `до ранга «${rk.next[1]}»: ${rk.next[0] - S.score} очков` : 'максимальный ранг'}</span></div>
@@ -923,7 +1178,15 @@ function renderMap() {
       <div class="ach-grid">${ACH.map(a => `<div class="ach ${S.ach[a.id] ? 'got' : ''}"><span class="ic">${a.ic}</span><span><b>${a.name}</b><span class="dim">${a.d}</span></span></div>`).join('')}</div>
     </div>
   </section>`;
+  runMapPlan();
 }
+let lastWide = null;
+addEventListener('resize', () => {
+  if (screen !== 'map' || walking) return;
+  const w = ($('#stage').clientWidth || innerWidth) >= 700;
+  if (lastWide !== null && w !== lastWide) renderMap();
+  lastWide = w;
+});
 
 /* ---------- Экран: отсек ---------- */
 function enterSector(sid) {
@@ -965,7 +1228,7 @@ function renderTheory() {
     <div class="terminal">
       <div class="terminal-bar"><i></i><i></i><i></i><span>terminal://отсек-${s.id}/справка</span></div>
       <div class="terminal-body">${THEORY[s.id]()}
-        <div class="row wide"><button class="btn primary" data-act="phase" data-phase="sim">Запустить симулятор →</button><button class="btn ghost" data-act="phase" data-phase="door">Сразу к двери</button></div>
+        <div class="row wide"><button class="btn primary" data-act="phase" data-phase="sim">Запустить симулятор →</button><button class="btn ghost" data-act="phase" data-phase="door">Сразу к двери</button>${'speechSynthesis' in window ? '<button class="btn ghost" data-act="speak">▶ Озвучить теорию</button>' : ''}</div>
       </div>
     </div>`;
 }
@@ -984,7 +1247,8 @@ function renderSim() {
     }).join('')}</div>`;
   } else {
     const vars = varsOf(c.src), { v, steps } = run(c.src, R.simEnv);
-    body = `<div class="sim">
+    body = `<div class="panel stack" style="padding:16px"><div class="row" style="justify-content:space-between"><span class="eyebrow">Логическая схема · нажимай на входы A, B, C</span><span class="dim" style="font-size:13px">бирюзовый провод — 1, коралловый — 0</span></div>${circuitSVG(c.src, R.simEnv, true)}</div>
+    <div class="sim">
       <div class="stack">
         <div class="switches">${vars.map(x => `<button class="sw ${R.simEnv[x] ? 'on' : ''}" data-act="sim-toggle" data-var="${x}" aria-pressed="${!!R.simEnv[x]}"><span class="vn">${x} = ${R.simEnv[x]}</span><span class="knob"></span>${c.legend ? `<span class="lg">${c.legend[x]}</span>` : ''}</button>`).join('')}</div>
         <div class="sim-out"><div class="biglamp ${v ? 'on' : ''}"></div><div class="stack" style="gap:6px;min-width:0"><span class="eyebrow">${c.out}</span><div>${exprHTML(c.src)} = ${bit(v)}</div><div class="dim" style="font-size:14px">${v ? 'Лампа горит: выражение истинно.' : 'Лампа погасла: выражение ложно.'}</div></div></div>
@@ -1051,10 +1315,14 @@ function renderTask() {
       return `<div class="lamp-row ${miss ? 'miss' : ''}"><span class="lampdot ${v === null ? '' : v ? 'on' : 'off'}">${v === null ? '?' : v}</span><span>Лампа ${i + 1}: ${exprHTML(l.src)}</span><span class="target t${l.target}">${l.target ? 'должна ГОРЕТЬ' : 'должна ПОГАСНУТЬ'}</span></div>`;
     }).join('')}</div>
     <div class="switches">${t.vars.map(x => `<button class="sw ${t.env[x] ? 'on' : ''}" data-act="sw" data-var="${x}" aria-pressed="${!!t.env[x]}" ${done ? 'disabled' : ''}><span class="vn">${x} = ${t.env[x]}</span><span class="knob"></span></button>`).join('')}</div>`;
+  } else if (t.type === 'build') {
+    const pal = [...t.vars, 'НЕ', 'И', 'ИЛИ', '(', ')'];
+    body = `<div class="build-line ${t.seq.length ? '' : 'empty'}">${t.seq.length ? exprHTML(t.seq.join(' ')) : 'Нажимай на блоки ниже, чтобы собрать выражение'}</div>
+    <div class="palette">${pal.map(x => `<button class="tok ${/^[A-Z]$/.test(x) ? 'tv' : x.length > 1 || x === 'И' ? 'to' : 'tp'}" data-act="tok" data-tok="${x}" ${done ? 'disabled' : ''}>${x}</button>`).join('')}<button class="tok tx" data-act="tok-back" ${done ? 'disabled' : ''} aria-label="Стереть последний блок">⌫</button><button class="tok tx" data-act="tok-clear" ${done ? 'disabled' : ''}>Очистить</button></div>`;
   } else if (t.type === 'table') {
     body = `<div class="tt-wrap"><table class="tt"><thead><tr>${t.vars.map(v => `<th>${v}</th>`).join('')}${t.cols.map((c, i) => `<th class="${i === t.cols.length - 1 ? 'fin' : ''}">${exprHTML(c)}</th>`).join('')}</tr></thead><tbody>${t.rows.map((env, r) => `<tr>${t.vars.map(v => `<td>${bit(env[v])}</td>`).join('')}${t.cols.map((c, ci) => { const val = t.fill[r][ci], err = t.errs && t.errs.has(r + ':' + ci); return `<td><button class="cellbtn ${val === null ? '' : 'v' + val} ${err ? 'err' : ''}" data-act="cell" data-r="${r}" data-c="${ci}" ${done ? 'disabled' : ''} aria-label="Строка ${r + 1}, столбец ${c}: ${val === null ? 'пусто' : val}">${val === null ? '·' : val}</button></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`;
   }
-  const needCheck = t.type === 'switch' || t.type === 'table';
+  const needCheck = t.type === 'switch' || t.type === 'table' || t.type === 'build';
   const fb = R.feedback;
   const allOpen = R.opened.every(Boolean);
   el.innerHTML = `
@@ -1062,8 +1330,9 @@ function renderTask() {
     ${fb ? `<div class="feedback ${fb.cls}"><span class="fh">${fb.title}</span><div>${fb.html}</div></div>` : ''}
     <div class="q">${t.q}</div>
     ${body}
-    ${t.hintShown && !done ? `<div class="feedback hint"><span class="fh">Подсказка</span><div>${t.hint}</div></div>` : ''}
-    ${done ? `<div class="feedback ok"><span class="fh">Замок открыт · пояснение</span><div class="stack" style="gap:8px">${typeof t.explain === 'function' ? t.explain(t.env) : t.explain}</div></div>` : ''}
+    ${t.hintShown && !done ? `<div class="feedback hint"><span class="fh">${t.freeHint ? 'ЛОГОС: адаптивная помощь (бесплатно)' : 'Подсказка'}</span><div>${t.hint}</div></div>` : ''}
+    ${done ? `<div class="feedback ok"><span class="fh">Замок открыт · пояснение</span><div class="stack" style="gap:8px">${typeof t.explain === 'function' ? t.explain(t.type === 'build' ? t.seq : t.env) : t.explain}</div></div>` : ''}
+    ${!done ? `<button class="bet ${R.bet ? 'on' : ''}" data-act="bet" aria-pressed="${!!R.bet}"><span class="bet-knob"></span><span><b>Ставка уверенности</b><span class="dim">${R.bet ? 'Ставка сделана: верно +200, ошибка −50' : 'Уверен в ответе? Включи: верно +200 вместо +100, ошибка −50'}</span></span></button>` : ''}
     <div class="task-foot">
       ${done
         ? `<span class="sp"></span><button class="btn primary" data-act="${allOpen ? 'open-door' : 'next-lock'}" data-autofocus>${allOpen ? 'Открыть дверь' : 'Следующий замок →'}</button>`
@@ -1081,7 +1350,11 @@ function onCorrect(anchor) {
   R.solved = true; R.opened[R.active] = true;
   S.streak++; S.bestStreak = Math.max(S.bestStreak, S.streak);
   Snd.ok();
-  addScore(100, anchor);
+  R.wrongRow = 0;
+  if (R.bet && !R.practice) { S.conf.n++; S.conf.ok++; }
+  addScore(R.bet ? 200 : 100, anchor);
+  if (R.bet) setTimeout(() => toast('Ставка сыграла', 'Ты был уверен и не ошибся: +200 очков.'), 200);
+  R.bet = false;
   if (S.streak >= 3) { const b = Math.min(50, (S.streak - 2) * 10); setTimeout(() => addScore(b, anchor, `СЕРИЯ ×${S.streak} +${b}`), 380); }
   award('first');
   if (S.streak >= 5) award('combo5');
@@ -1091,9 +1364,10 @@ function onCorrect(anchor) {
 }
 function onWrong(anchor) {
   const t = R.locks[R.active];
-  S.streak = 0; R.errors++;
-  if (!R.practice) S.errors++;
-  addScore(-25, anchor);
+  S.streak = 0; R.errors++; R.wrongRow = (R.wrongRow || 0) + 1;
+  if (!R.practice) { S.errors++; S.secErr[R.sid] = (S.secErr[R.sid] || 0) + 1; if (R.bet) S.conf.n++; }
+  const betLost = R.bet; R.bet = false;
+  addScore(betLost ? -50 : -25, anchor);
   R.energy--;
   Snd.bad(); setTimeout(() => Snd.alarm(), 250);
   alarmFX($('#task'));
@@ -1113,7 +1387,13 @@ function onWrong(anchor) {
     t.rows.forEach((env, r) => { const vals = rowVals(t.src, env); t.cols.forEach((c, ci) => { if (t.fill[r][ci] !== vals[c]) t.errs.add(r + ':' + ci); }); });
     html += ` Неверных или пустых клеток: ${t.errs.size}. Они подсвечены красным.`;
   }
-  R.feedback = { cls: 'bad', title: 'Неверно · −25 очков', html };
+  else if (t.type === 'build') {
+    const env = combos(t.vars).find(e => value(t.seq.join(' '), e) !== value(t.src, e));
+    html += ` Выражение не совпадает с условием. Проверь, например, набор ${envStr(env)}: по условию должно получиться ${bit(value(t.src, env))}, а твоё выражение даёт ${bit(value(t.seq.join(' '), env))}.`;
+  }
+  const cur = R.locks[R.active];
+  if (R.wrongRow >= 2 && !cur.hintShown) { cur.hintShown = true; cur.freeHint = true; html += ' <b>ЛОГОС заметил две ошибки подряд и бесплатно открыл подсказку.</b>'; }
+  R.feedback = { cls: 'bad', title: `Неверно · ${betLost ? '−50 очков (ставка проиграна)' : '−25 очков'}`, html };
   save(); hud(); renderDoorBox(); renderTask();
 }
 function overload() {
@@ -1138,6 +1418,7 @@ function completeSector() {
   const sid = R.sid, pen = R.errors + R.hints;
   const stars = R.errors === 0 && R.hints === 0 ? 3 : pen <= 2 ? 2 : 1;
   if (!R.practice) {
+    S.justOpened = sid;
     S.sectors[sid] = { done: true, stars, errors: R.errors, hints: R.hints, time: R.doorSec, overloads: R.overloads };
     if (stars === 3) award('clean');
     if (R.overloads > 0) award('phoenix');
@@ -1162,7 +1443,7 @@ function completeSector() {
     </div>
     ${R.practice ? '<p class="dim">В режиме тренировки очки и звёзды не меняются.</p>' : ''}
     <div class="row" style="justify-content:center">
-      ${last && !R.practice ? `<button class="btn primary" data-act="finale" data-autofocus>Выйти на свободу →</button>` : !last ? `<button class="btn primary" data-act="next-sector" data-autofocus>Отсек ${String(sid + 1).padStart(2, '0')} →</button>` : ''}
+      ${last && !R.practice ? `<button class="btn primary" data-act="escape" data-autofocus>Выйти на свободу →</button>` : !last ? `<button class="btn primary" data-act="next-sector" data-autofocus>Отсек ${String(sid + 1).padStart(2, '0')} →</button>` : ''}
       <button class="btn ghost" data-act="map">На карту</button>
     </div>`, 'win');
 }
@@ -1174,7 +1455,8 @@ function hash(str) { let h = 2166136261; for (const ch of str) { h ^= ch.codePoi
 function resultCode() {
   const d = new Date(S.finishedAt || Date.now());
   const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  const p = [1, S.name, S.cls, S.score, S.errors, S.hints, S.elapsed, SECTORS.map(s => S.sectors[s.id]?.stars || 0).join(''), S.bestStreak, Object.keys(S.ach).length, date].join('~');
+  const p = [2, S.name, S.cls, S.score, S.errors, S.hints, S.elapsed, SECTORS.map(s => S.sectors[s.id]?.stars || 0).join(''), S.bestStreak, Object.keys(S.ach).length, date,
+    SECTORS.map(s => Math.min(9, S.secErr[s.id] || 0)).join(''), S.conf.n, S.conf.ok, S.reflect.mood ?? '', S.reflect.topic ?? ''].join('~');
   return `LAB-${hash(p)}-${b64e(p)}`;
 }
 function decodeCode(code) {
@@ -1184,7 +1466,22 @@ function decodeCode(code) {
   let p; try { p = b64d(m[2]); } catch (e) { return { err: 'Код повреждён: его не удалось прочитать.' }; }
   if (hash(p) !== m[1]) return { err: 'Контрольная сумма не совпадает: код изменён или скопирован не полностью.' };
   const f = p.split('~');
-  return { name: f[1], cls: f[2], score: +f[3], errors: +f[4], hints: +f[5], elapsed: +f[6], stars: f[7].split('').map(Number), best: +f[8], ach: +f[9], date: f[10] };
+  const d = { name: f[1], cls: f[2], score: +f[3], errors: +f[4], hints: +f[5], elapsed: +f[6], stars: f[7].split('').map(Number), best: +f[8], ach: +f[9], date: f[10] };
+  if (f[0] === '2') Object.assign(d, { secErr: f[11].split('').map(Number), confN: +f[12], confOk: +f[13], mood: f[14], topic: f[15] });
+  return d;
+}
+const MOODS = { g: ['Всё понятно', 'var(--true)'], y: ['Остались вопросы', 'var(--signal)'], r: ['Было трудно', 'var(--alarm)'] };
+const TOPIC_NAME = t => t === '0' ? 'ничего не было трудным' : t ? `отсек ${t}: ${SECTORS[+t - 1].name}` : 'не указано';
+function reflectHTML() {
+  const r = S.reflect;
+  return `<div class="panel stack" id="reflect">
+    <h3>Рефлексия</h3>
+    <p class="dim" style="font-size:14px">Ответы попадут в код результата: учитель увидит, какие темы повторить на уроке.</p>
+    <div class="stack" style="gap:8px"><span>Как тебе тема «Логические выражения»?</span>
+      <div class="chips">${Object.entries(MOODS).map(([k, [l, c]]) => `<button class="chipbtn ${r.mood === k ? 'on' : ''}" style="--c:${c}" data-act="reflect" data-k="mood" data-v="${k}"><i></i>${l}</button>`).join('')}</div></div>
+    <div class="stack" style="gap:8px"><span>Какой отсек оказался самым трудным?</span>
+      <div class="chips">${SECTORS.map(s => `<button class="chipbtn ${r.topic === String(s.id) ? 'on' : ''}" style="--c:var(--signal)" data-act="reflect" data-k="topic" data-v="${s.id}">${s.id}. ${s.name}</button>`).join('')}<button class="chipbtn ${r.topic === '0' ? 'on' : ''}" style="--c:var(--true)" data-act="reflect" data-k="topic" data-v="0">Все были понятны</button></div></div>
+  </div>`;
 }
 function renderFinale() {
   if (!S.finishedAt) {
@@ -1213,11 +1510,13 @@ function renderFinale() {
         <div><b>${fmtTime(S.elapsed)}</b><span>время</span></div>
         <div><b>×${S.bestStreak}</b><span>лучшая серия</span></div>
         <div><b style="font-size:16px;line-height:1.7">${rk.name}</b><span>ранг</span></div>
+        <div><b>${S.conf.n ? Math.round(S.conf.ok / S.conf.n * 100) + '%' : '—'}</b><span>точность ставок</span></div>
       </div>
       <div class="sector-stars">${SECTORS.map(s => `<div>S-0${s.id}<br>${starsHTML(S.sectors[s.id]?.stars || 0)}</div>`).join('')}</div>
+      ${reflectHTML()}
       <div class="panel stack">
         <h3>Код результата для учителя</h3>
-        <p class="dim" style="font-size:14px">Скопируй код и отправь учителю. По нему учитель увидит очки, ошибки, время и звёзды. Изменить код незаметно не получится: в нём есть контрольная сумма.</p>
+        <p class="dim" style="font-size:14px">Скопируй код и отправь учителю. По нему учитель увидит очки, ошибки по темам, время, звёзды и твою рефлексию. Изменить код незаметно не получится: в нём есть контрольная сумма.</p>
         <div class="code-box"><code id="rcode">${resultCode()}</code><button class="btn small primary" data-act="copy-code">Копировать</button></div>
       </div>
       <div class="stack">
@@ -1264,7 +1563,7 @@ function renderTeacher() {
           <tr><td>2</td><td>Операция НЕ (инверсия)</td><td>истина/ложь · выбор ответа · пульт управления</td></tr>
           <tr><td>3</td><td>Операция И (конъюнкция)</td><td>истина/ложь · выбор ответа · пульт управления</td></tr>
           <tr><td>4</td><td>Операция ИЛИ (дизъюнкция)</td><td>истина/ложь · выбор ответа · таблица истинности</td></tr>
-          <tr><td>5</td><td>Порядок выполнения операций</td><td>выбор ответа · истина/ложь · пульт управления</td></tr>
+          <tr><td>5</td><td>Порядок выполнения операций</td><td>выбор ответа · истина/ложь · конструктор выражений</td></tr>
           <tr><td>6</td><td>Финальный шлюз (босс): сложные выражения</td><td>таблица истинности · пульт на 3 лампы · подбор значения X</td></tr>
         </tbody></table></div>
       <p class="dim" style="font-size:14px">Задания генерируются случайно: у каждого ученика свои значения переменных и выражения, а после ошибки замок меняет задание. Списать ответ у соседа не получится.</p>
@@ -1274,7 +1573,9 @@ function renderTeacher() {
       <ul style="margin:0;padding-left:20px">
         <li>Звёзды за отсек: 3 — без ошибок и подсказок, 2 — не больше двух ошибок и подсказок вместе, 1 — отсек пройден.</li>
         <li>Итог: 16–18 звёзд → ★★★, 11–15 → ★★, меньше 11 → ★.</li>
-        <li>Очки: +100 за замок, +50 за полное исследование симулятора, бонус за серию верных ответов, −25 за ошибку, −20 за подсказку.</li>
+        <li>Очки: +100 за замок, +50 за полное исследование симулятора, бонус за серию верных ответов, −25 за ошибку, −20 за подсказку. Ставка уверенности: +200 за верный ответ, −50 за ошибку.</li>
+        <li><b>Карта трудностей</b> показывает число ошибок в каждом отсеке: чем ярче клетка, тем больше ошибок. Вместе с рефлексией ученика это подсказывает, какую тему повторить.</li>
+        <li><b>Точность ставок</b> показывает, насколько ученик правильно оценивает свои знания (метакогнитивный навык).</li>
       </ul>
     </div>
   </section>`;
@@ -1285,9 +1586,12 @@ function showRules() {
   showModal(`
     <div class="eyebrow">Инструкция ЛОГОСа</div><h2>Как играть</h2>
     <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px">
-      <li><b>Отсек</b> проходится в три этапа: терминал с теорией → симулятор → дверь с тремя замками.</li>
+      <li><b>Карта.</b> Нажми на отсек, и робот дойдёт до него по коридорам. Шлюз между отсеками открывается, когда пройден предыдущий.</li>
+      <li><b>Отсек</b> проходится в три этапа: терминал с теорией → симулятор с логической схемой → дверь с тремя замками.</li>
       <li><b>Энергия.</b> В каждом отсеке 3 заряда. Ошибка тратит заряд и включает тревогу. При 0 зарядов замки сбрасываются и меняют коды.</li>
       <li><b>Очки.</b> +100 за замок, −25 за ошибку, −20 за подсказку, +50 за полное исследование симулятора.</li>
+      <li><b>Ставка уверенности.</b> Перед ответом можно включить ставку: верный ответ даст +200 вместо +100, ошибка стоит −50.</li>
+      <li><b>Адаптивная помощь.</b> После двух ошибок подряд ЛОГОС бесплатно открывает подсказку.</li>
       <li><b>Серия.</b> Начиная с 3 верных ответов подряд каждый следующий даёт бонус +10, +20 … до +50. Ошибка обнуляет серию.</li>
       <li><b>Звёзды.</b> 3 звезды — отсек без ошибок и подсказок, 2 — не больше двух ошибок и подсказок вместе, 1 — отсек пройден.</li>
       <li><b>Ранги:</b> ${RANKS.map(r => `${r[1]} (${r[0]})`).join(' → ')}.</li>
@@ -1299,7 +1603,7 @@ function showRules() {
 
 /* ---------- Действия ---------- */
 const ACT = {
-  'continue': () => { S = store.get(SAVE_KEY); Snd.on = S.sound !== false; go(S.finishedAt ? 'finale' : 'map'); },
+  'continue': () => { S = migrate(store.get(SAVE_KEY)); Snd.on = S.sound !== false; go(S.finishedAt ? 'finale' : 'map'); },
   'reset-ask': () => { $('#confirm-slot').innerHTML = `<div class="confirm stack" style="margin-top:12px"><b>Начать заново?</b><span class="dim">Сохранённый прогресс${S || store.get(SAVE_KEY) ? ', очки и достижения' : ''} будут удалены.</span><div class="row"><button class="btn primary" data-act="reset-yes">Да, начать заново</button><button class="btn ghost" data-act="reset-no">Отмена</button></div></div>`; },
   'reset-no': () => { $('#confirm-slot').innerHTML = ''; },
   'reset-yes': () => { store.del(SAVE_KEY); S = null; R = null; go('title'); },
@@ -1310,9 +1614,27 @@ const ACT = {
   'map': () => { R = null; go('map'); },
   'rules': () => showRules(),
   'sound': () => { Snd.on = !Snd.on; if (S) { S.sound = Snd.on; save(); } hud(); },
-  'open-sector': el => { const sid = +el.dataset.sid; if (unlocked(sid)) enterSector(sid); },
-  'next-sector': () => { closeModal(); enterSector(R.sid + 1); },
-  'phase': el => { R.phase = el.dataset.phase; R.feedback = null; renderSector(); },
+  'open-sector': el => {
+    const sid = +el.dataset.sid; if (!unlocked(sid) || walking) return;
+    walking = true; Snd.click();
+    walk(roomPath(curL, S.pos - 1, sid - 1), () => { walking = false; S.pos = sid; save(); enterSector(sid); });
+  },
+  'next-sector': () => { const n = R.sid + 1; R = null; mapPlan = { to: n }; go('map'); },
+  'escape': () => { R = null; mapPlan = { to: 'exit' }; go('map'); },
+  'tok': el => { const t = R.locks[R.active]; if (t.seq.length < 24) t.seq.push(el.dataset.tok); R.feedback = null; Snd.click(); renderTask(); },
+  'tok-back': () => { R.locks[R.active].seq.pop(); Snd.click(); renderTask(); },
+  'tok-clear': () => { R.locks[R.active].seq = []; Snd.click(); renderTask(); },
+  'bet': () => { R.bet = !R.bet; Snd.tone(R.bet ? 990 : 500, .08, 'triangle', .05); renderTask(); },
+  'reflect': el => { S.reflect[el.dataset.k] = el.dataset.v; save(); $('#reflect').outerHTML = reflectHTML(); $('#rcode').textContent = resultCode(); Snd.click(); },
+  'speak': el => {
+    if (speechSynthesis.speaking) { speechSynthesis.cancel(); el.textContent = '▶ Озвучить теорию'; return; }
+    const box = $('.terminal-body').cloneNode(true); $$('.tt-wrap,.row,.circ-wrap,.notation', box).forEach(x => x.remove());
+    const u = new SpeechSynthesisUtterance(box.textContent.replace(/\s+/g, ' ').trim()); u.lang = 'ru-RU'; u.rate = 1;
+    const ru = speechSynthesis.getVoices().find(v => /^ru/i.test(v.lang)); if (ru) u.voice = ru;
+    u.onend = () => { el.textContent = '▶ Озвучить теорию'; };
+    speechSynthesis.speak(u); el.textContent = '■ Остановить';
+  },
+  'phase': el => { if ('speechSynthesis' in window) speechSynthesis.cancel(); R.phase = el.dataset.phase; R.feedback = null; renderSector(); },
   'scan': el => { const i = +el.dataset.i; if (R.revealed.has(i)) return; R.revealed.add(i); const k = R.scan[i].k; Snd.tone(k === 'T' ? 880 : k === 'F' ? 330 : 520, .12, 'triangle', .05); renderSim(); checkExplored($$('.scan')[i]); },
   'sim-toggle': el => { const v = el.dataset.var; R.simEnv[v] ^= 1; R.visited.add(envKey(R.simEnv)); Snd.click(); renderSim(); checkExplored($(`[data-act="sim-toggle"][data-var="${v}"]`)); },
   'tf': el => answer((el.dataset.v === '1') === R.locks[R.active].answer, el),
@@ -1321,6 +1643,12 @@ const ACT = {
   'cell': el => { const t = R.locks[R.active], r = +el.dataset.r, c = +el.dataset.c, v = t.fill[r][c]; t.fill[r][c] = v === null ? 1 : v === 1 ? 0 : 1; if (t.errs) t.errs.delete(r + ':' + c); Snd.click(); renderTask(); },
   'check': el => {
     const t = R.locks[R.active];
+    if (t.type === 'build') {
+      if (!t.seq.length) { R.feedback = { cls: 'hint', title: 'Выражение пустое', html: 'Собери выражение из блоков, потом нажми «Проверить». Энергия не потрачена.' }; return renderTask(); }
+      try { parse(t.seq.join(' ')); } catch (e) { R.feedback = { cls: 'hint', title: 'Ошибка записи', html: 'Выражение записано не по правилам: не хватает переменной, операции или скобки. Энергия не потрачена, исправь запись.' }; return renderTask(); }
+      const ok = combos(t.vars).every(e => value(t.seq.join(' '), e) === value(t.src, e));
+      return answer(ok, el);
+    }
     if (t.type === 'switch') { if (t.sat(t.env)) { t.shown = { ...t.env }; } answer(t.sat(t.env), el); }
     else if (t.type === 'table') {
       if (t.fill.some(row => row.some(v => v === null))) { R.feedback = { cls: 'hint', title: 'Таблица не заполнена', html: 'Заполни все клетки, потом нажми «Проверить». Энергия не потрачена.' }; return renderTask(); }
@@ -1329,7 +1657,7 @@ const ACT = {
     }
   },
   'hint': el => { const t = R.locks[R.active]; if (t.hintShown) return; t.hintShown = true; R.hints++; if (!R.practice) S.hints++; addScore(-20, el); Snd.tone(440, .15, 'triangle', .05); renderTask(); },
-  'next-lock': () => { R.active = R.opened.findIndex(o => !o); R.solved = false; R.feedback = null; renderDoorBox(); renderTask(); },
+  'next-lock': () => { R.bet = false; R.active = R.opened.findIndex(o => !o); R.solved = false; R.feedback = null; renderDoorBox(); renderTask(); },
   'open-door': () => openDoor(),
   'theory-modal': () => showModal(`<div class="eyebrow">Терминал отсека ${R.sid}</div><h2>${R.sec.name}</h2><div class="stack">${THEORY[R.sid]()}</div><div class="row"><button class="btn primary" data-act="close-modal">Вернуться к двери</button></div>`, 'wide'),
   'close-modal': () => closeModal(),
@@ -1355,6 +1683,10 @@ const ACT = {
         <tr><td>Звёзды по отсекам</td><td>${d.stars.map((s, i) => `<span class="mono dim">${i + 1}:</span>${starsHTML(s)}`).join(' ')}</td></tr>
         <tr><td>Всего звёзд</td><td class="mono">${tot}/18</td></tr>
         <tr><td>Лучшая серия / достижения</td><td class="mono">×${d.best} / ${d.ach} из ${ACH.length}</td></tr>
+        ${d.secErr ? `<tr><td>Ошибки по отсекам (карта трудностей)</td><td><div class="heat">${d.secErr.map((e, i) => `<span style="--a:${Math.min(1, e / 4)}" title="Отсек ${i + 1}: ${SECTORS[i].name}"><b>${i + 1}</b>${e}</span>`).join('')}</div></td></tr>
+        <tr><td>Ставки уверенности</td><td class="mono">${d.confN ? `${d.confOk} из ${d.confN} верно (${Math.round(d.confOk / d.confN * 100)}%)` : 'не делал'}</td></tr>
+        <tr><td>Самооценка</td><td>${d.mood && MOODS[d.mood] ? `<span style="color:${MOODS[d.mood][1]}">●</span> ${MOODS[d.mood][0]}` : 'не указана'}</td></tr>
+        <tr><td>Самый трудный отсек (по мнению ученика)</td><td>${TOPIC_NAME(d.topic)}</td></tr>` : ''}
       </tbody></table><p style="color:var(--true)">Код подлинный: контрольная сумма совпала.</p></div>`;
   },
 };
@@ -1366,13 +1698,14 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.bubble[data-act]')) { e.preventDefault(); ACT['intro-next'](); }
+  else if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('svg [data-act]')) { e.preventDefault(); const f = ACT[e.target.dataset.act]; if (f) f(e.target, e); }
 });
 
 const RENDER = { title: renderTitle, intro: renderIntro, map: renderMap, sector: renderSector, finale: renderFinale, teacher: renderTeacher };
 
 /* ---------- Запуск ---------- */
 function start(data) {
-  if (data && data.S) { S = data.S; Snd.on = S.sound !== false; go(S.finishedAt ? 'finale' : 'map'); }
+  if (data && data.S) { S = migrate(data.S); Snd.on = S.sound !== false; go(S.finishedAt ? 'finale' : 'map'); }
   else go('title');
 }
 window.claude?.hot?.snapshot?.(() => ({ S }));
