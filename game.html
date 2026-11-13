@@ -123,7 +123,8 @@ blockquote{margin:6px 0 0;padding:12px 16px;border-left:4px solid var(--signal);
 @keyframes blink{50%{opacity:.25}}
 
 /* диалог */
-.dialog{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:end;max-width:860px;margin:0 auto;width:100%;padding-block:24px}
+.dialog{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:end;max-width:860px;margin:0 auto;width:100%;padding-block:9vh 24px}
+.scene-title{font-size:clamp(26px,4vw,40px);margin-bottom:6px}
 .speaker{width:120px;display:grid;place-items:center}
 .bubble{position:relative;padding:22px;border-radius:16px;background:var(--hull);border:2px solid var(--seam);min-height:150px;display:flex;flex-direction:column;gap:12px;cursor:pointer}
 .bubble.sys{border-color:var(--alarm)}
@@ -446,6 +447,39 @@ blockquote{margin:6px 0 0;padding:12px 16px;border-left:4px solid var(--signal);
 .heat{display:flex;gap:4px;flex-wrap:wrap}
 .heat span{display:flex;flex-direction:column;align-items:center;min-width:38px;padding:4px;border-radius:8px;font-family:var(--f-mono);background:color-mix(in srgb,var(--alarm) calc(var(--a) * 70%),var(--hull-2))}
 .heat b{font-size:10px;color:var(--dim)}
+
+/* сторителлинг */
+.prof-core{width:110px;height:110px;border-radius:50%;border:3px solid var(--signal);display:grid;place-items:center;align-content:center;gap:6px;color:var(--signal);font-family:var(--f-display);box-shadow:0 0 30px color-mix(in srgb,var(--signal) 30%,transparent)}
+.prof-core b{font-size:24px}
+.prof-core .wave{display:flex;gap:3px;align-items:center;height:18px}
+.prof-core .wave i{width:4px;border-radius:2px;background:var(--signal);animation:wave 1s ease-in-out infinite}
+.prof-core .wave i:nth-child(1){height:6px}.prof-core .wave i:nth-child(2){height:14px;animation-delay:.1s}.prof-core .wave i:nth-child(3){height:18px;animation-delay:.2s}.prof-core .wave i:nth-child(4){height:12px;animation-delay:.3s}.prof-core .wave i:nth-child(5){height:7px;animation-delay:.4s}
+@keyframes wave{50%{transform:scaleY(.4)}}
+.virus-face svg{animation:glitch 1.6s infinite}
+.bubble.prof{border-color:var(--signal)} .bubble.prof .who{color:var(--signal)}
+.bubble.virus{border-color:var(--alarm)} .bubble.virus .who{color:var(--alarm)}
+.journal{display:grid;gap:8px}
+.jentry{padding:12px 14px;border-radius:12px;border:1px solid var(--seam);background:var(--hull)}
+.jentry summary{cursor:pointer}
+.jentry p{margin-top:8px;color:var(--dim);font-size:15px;max-width:75ch}
+.jentry.locked{opacity:.55}
+.journal-new{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:12px;border:1px dashed var(--signal);background:color-mix(in srgb,var(--signal) 6%,transparent)}
+/* кейс */
+.case-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:18px;align-items:start}
+.case-file{border-color:color-mix(in srgb,var(--signal) 45%,var(--seam))}
+.logos-mini{flex:none;width:52px;height:52px;border-radius:50%;border:2px solid var(--true);display:grid;place-items:center;font-family:var(--f-mono);font-size:10px;font-weight:700;color:var(--true)}
+.case-tt td{white-space:normal;text-align:left}
+.code-line{padding:10px 14px;border-radius:10px;background:var(--ink);border:1px solid var(--seam);margin-bottom:8px}
+.code-line .op{color:var(--signal)}
+.case-step{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:12px;border:1px solid var(--seam);background:var(--hull-2)}
+.case-step.locked{opacity:.5}
+.case-step.solved{border-color:color-mix(in srgb,var(--true) 50%,var(--seam))}
+.case-step.cur{border-color:var(--signal)}
+.cs-n{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--ink);font-family:var(--f-mono);font-weight:700;color:var(--signal)}
+.case-step.solved .cs-n{color:var(--true)}
+.opt.struck{opacity:.45;text-decoration:line-through}
+.discuss{border-color:var(--true)}
+@media (max-width:820px){.case-layout{grid-template-columns:1fr}}
 
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
@@ -861,6 +895,112 @@ const SECTORS = [
     ] },
 ];
 
+/* ---------- Сторителлинг: сцены отсеков и бортовой журнал ---------- */
+const STORY = {
+  1: { intro: [
+      { who: 'logos', text: 'Отсек сканирования. Здесь хранится архив профессора Ады Булевой, создательницы лаборатории.' },
+      { who: 'prof', text: 'Запись 1. Если вы это слышите, значит, ЛОЖЬ вырвалась на свободу. Она умеет одно: выдавать неправду за правду.' },
+      { who: 'prof', text: 'Ещё Аристотель учил: высказывание — это то, что может быть истинным или ложным. Научись отличать их, и ЛОЖЬ тебя не обманет.' },
+      { who: 'bit', text: 'Принято. Начинаю сканирование сообщений.' }],
+    outro: [
+      { who: 'logos', text: 'Отлично! Теперь ты отличаешь факты от вопросов, приказов и догадок.' },
+      { who: 'virus', text: 'Подумаешь! Посмотрим, как ты справишься, когда я переверну все сигналы наоборот.' }],
+    log: { title: 'Аристотель и высказывания', text: 'Аристотель (IV век до н. э.) первым описал законы логики. Он заметил: высказывание бывает либо истинным, либо ложным, третьего не дано. Этот «закон исключённого третьего» лежит в основе работы компьютера: каждый бит равен либо 1, либо 0.' } },
+  2: { intro: [
+      { who: 'virus', text: 'Хе-хе. Я поменял сигналы на противоположные. Где была правда, теперь ложь!' },
+      { who: 'logos', text: 'Спокойно, БИТ-8. Противоположное значение даёт операция НЕ. Применишь её ещё раз и вернёшь всё обратно.' },
+      { who: 'prof', text: 'Запись 2. В 1847 году Джордж Буль предложил записывать логику как алгебру: истина — 1, ложь — 0. Отрицание — первая операция его алгебры.' }],
+    outro: [
+      { who: 'bit', text: 'Двойное отрицание вернуло исходный сигнал. Индикаторы снова говорят правду!' },
+      { who: 'virus', text: 'Один фокус ты раскусил. Но хранилище тебе не открыть: там нужны ДВА ключа сразу.' }],
+    log: { title: 'Джордж Буль и алгебра логики', text: 'Английский математик Джордж Буль в книгах 1847 и 1854 годов превратил логику в алгебру с двумя значениями: 1 и 0. Поэтому логические выражения называют булевыми, а логический тип данных в программировании — boolean.' } },
+  3: { intro: [
+      { who: 'logos', text: 'Хранилище. Сейф открывается, только если выполнены оба условия: приложена карта И введён верный код.' },
+      { who: 'prof', text: 'Запись 3. В 1937 году студент Клод Шеннон показал: операцию И выполняют два выключателя, соединённые последовательно. Ток пройдёт, только если замкнуты оба.' },
+      { who: 'virus', text: 'А я покопался в журнале хранилища. Найдёшь, где я наследил?' }],
+    outro: [
+      { who: 'logos', text: 'Подделка в журнале разоблачена. Вирус теряет позиции.' },
+      { who: 'virus', text: 'Хватит! В отсеке связи я оборвал линии. Посидишь в темноте!' }],
+    log: { title: 'Клод Шеннон и электрические схемы', text: 'В 1937 году 21-летний Клод Шеннон доказал, что алгебру Буля можно собрать из реле и выключателей. Последовательное соединение работает как И, параллельное — как ИЛИ. С этой работы начались цифровые компьютеры.' } },
+  4: { intro: [
+      { who: 'bit', text: 'В коридоре связи странно: свет горит без остановки, даже когда никто не нажимает кнопки.' },
+      { who: 'logos', text: 'Свет включается кнопкой у входа ИЛИ кнопкой у выхода. Хватит любой. Разберись, что сломано.' },
+      { who: 'prof', text: 'Запись 4. Параллельное соединение — это ИЛИ: ток найдёт хотя бы один путь. Поэтому в важных системах каналы дублируют: если сломается один, сработает другой.' }],
+    outro: [
+      { who: 'logos', text: 'Связь восстановлена. Дальше отсек управления: вирус испортил программу тревоги.' },
+      { who: 'virus', text: 'Я убрал всего пару скобок. Всего пару! Удачи, жестянка.' }],
+    log: { title: 'ИЛИ и надёжность', text: 'Операция ИЛИ — основа надёжных систем. В самолётах и космических кораблях важные сигналы дублируют: система срабатывает, если исправен хотя бы один канал.' } },
+  5: { intro: [
+      { who: 'logos', text: 'Отсек управления. Вирус изменил программу тревоги: убрал скобки в логическом выражении.' },
+      { who: 'prof', text: 'Запись 5. Порядок операций в логике как в арифметике: И похоже на умножение, ИЛИ — на сложение. Без скобок программа делает не то, что задумал человек.' },
+      { who: 'virus', text: 'Одна пропущенная скобка, и вся лаборатория эвакуируется. Гениально, правда?' }],
+    outro: [
+      { who: 'logos', text: 'Программа исправлена. Остался финальный шлюз. ЛОЖЬ ждёт тебя там.' },
+      { who: 'bit', text: 'Иду. Логические схемы готовы.' }],
+    log: { title: 'Ошибка в одну скобку', text: 'Многие реальные сбои программ случались из-за неверного порядка операций или пропущенного отрицания. Поэтому опытные программисты ставят скобки даже там, где порядок и так понятен.' } },
+  6: { intro: [
+      { who: 'virus', text: 'Наконец-то, жестянка. Я — ЛОЖЬ. Любая моя фраза может оказаться неправдой.' },
+      { who: 'logos', text: 'Не слушай его, БИТ-8. Логика сильнее обмана. Проверяй каждое утверждение.' },
+      { who: 'prof', text: 'Запись 6. Если ты дошёл до финала, пора сказать правду: ЛОЖЬ создала я. Это испытание. Оно проверяет, умеет ли робот мыслить логически.' },
+      { who: 'bit', text: 'Значит, чтобы выйти, нужно доказать, что я умею рассуждать?' },
+      { who: 'prof', text: 'Именно. Победи ЛОЖЬ, и шлюз откроется.' }],
+    outro: [
+      { who: 'virus', text: 'Невозможно… Логика… победила…' },
+      { who: 'prof', text: 'Запись 7. Поздравляю, БИТ-8. Ты прошёл испытание. Запомни главное: любую ложь можно разоблачить проверкой.' },
+      { who: 'logos', text: 'Шлюз открыт. Выходим на свободу!' }],
+    log: { title: 'Правда о вирусе «ЛОЖЬ»', text: 'Профессор Ада Булева создала ЛОЖЬ как испытание для роботов-ассистентов. Робот покидает лабораторию, только когда докажет, что умеет рассуждать: отличать высказывания, применять НЕ, И, ИЛИ и находить ошибки.' } },
+};
+const WHO = { sys: 'Система', logos: 'ЛОГОС, бортовой ИИ', bit: 'БИТ-8', virus: 'Вирус «ЛОЖЬ»', prof: 'Профессор Ада Булева · аудиозапись' };
+
+/* ---------- Кейс-метод: реальные ситуации для анализа ---------- */
+const dataTable = (head, rows) => `<div class="tt-wrap"><table class="tt case-tt"><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${typeof c === 'number' ? bit(c) : c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+const CASES = {
+  1: { title: 'Ночные сообщения', story: 'Ночью система безопасности получила пять сообщений. В журнал можно записать только высказывания: утверждения, которые бывают истинными или ложными. Помоги системе разобраться.',
+    data: () => dataTable(['№', 'Сообщение'], [['1', '«Температура в отсеке 21 °C»'], ['2', '«Проверьте вентиляцию!»'], ['3', '«Кто открыл дверь 3?»'], ['4', '«Дверь 3 открыта»'], ['5', '«В отсеке находится x человек»']]),
+    steps: [
+      { q: 'Какие сообщения система может записать как высказывания?', opts: ['1 и 4', '1, 2 и 4', '1, 4 и 5', 'Все пять'], hint: 'Приказ и вопрос не бывают истинными или ложными. А что с сообщением, где есть неизвестное x?', explain: 'Сообщения 1 и 4 — утверждения о фактах. 2 — приказ, 3 — вопрос, 5 содержит неизвестную x, поэтому его истинность определить нельзя.' },
+      { q: 'Охранник проверил: дверь 3 заперта. Какое значение у сообщения 4?', opts: ['Ложь (0)', 'Истина (1)', 'Это не высказывание'], hint: 'Сообщение остаётся высказыванием, даже если оно неверное.', explain: '«Дверь 3 открыта» — высказывание, но ложное: дверь заперта. Датчик прислал неправду.' },
+      { q: 'Как системе поступать с сообщениями датчиков?', opts: ['Считать их высказываниями и проверять: сообщение может оказаться ложным', 'Всегда верить датчикам', 'Не обращать внимания на сообщения датчиков'], hint: 'Вспомни, что произошло с сообщением 4.', explain: 'Высказывание может быть и истинным, и ложным. Поэтому важные сообщения нужно проверять, а не принимать на веру.' }],
+    discuss: 'Чем «высказывание» отличается от «истинного высказывания»? Приведите пример ложного сообщения из жизни, например из новостей или соцсетей.' },
+  2: { title: 'Перепутанный индикатор', story: 'Инженер подключил индикатор «Дверь закрыта» к датчику двери. Датчик выдаёт сигнал A = «дверь открыта». Робот доверился индикатору и чуть не врезался в закрытую дверь. Вот журнал за день.',
+    data: () => dataTable(['Время', 'Дверь открыта (A)', 'Индикатор «Дверь закрыта»'], [['08:00', 0, 0], ['12:00', 1, 1], ['17:00', 0, 0]]),
+    steps: [
+      { q: 'Какое выражение должен вычислять индикатор «Дверь закрыта»?', opts: [exprHTML('НЕ A'), exprHTML('A'), exprHTML('НЕ (НЕ A)')], hint: '«Закрыта» — это отрицание высказывания «открыта».', explain: `Индикатор «закрыта» должен гореть, когда дверь не открыта: ${exprHTML('НЕ A')}.` },
+      { q: 'В скольких записях журнала индикатор показал неверное состояние?', opts: ['Во всех трёх', 'Только в 12:00', 'Ни в одной'], hint: 'Сравни столбец индикатора со значением НЕ A в каждой строке.', explain: 'Индикатор повторяет A, а должен показывать НЕ A. Поэтому он ошибается всегда: в 08:00 и 17:00 дверь закрыта, а индикатор погашен, в 12:00 наоборот.' },
+      { q: 'Как исправить схему?', opts: ['Поставить один элемент НЕ между датчиком и индикатором', 'Поставить два элемента НЕ подряд', 'Заменить датчик двери на новый'], hint: 'Чему равно двойное отрицание?', explain: `Нужен один элемент НЕ. Два элемента подряд дадут ${exprHTML('НЕ (НЕ A)')} = A, и ошибка останется. Датчик исправен, проблема в схеме.` }],
+    discuss: 'Почему индикатор, который показывает неправду, опаснее индикатора, который просто не горит?' },
+  3: { title: 'Подозрительный журнал хранилища', story: 'Сейф должен открываться только при двух условиях: A = «приложена карта» И B = «введён верный код». Вирус мог испортить замок. Вот журнал за день.',
+    data: () => dataTable(['Время', 'Карта (A)', 'Верный код (B)', 'Сейф открылся']), 
+    steps: [
+      { q: 'Какая запись журнала подозрительная?', opts: ['13:40', '09:12', '18:05'], hint: 'Вычисли A И B для каждой записи и сравни с последним столбцом.', explain: `В 13:40: ${exprHTML('A И B')} = 1 И 0 = 0, но сейф открылся. Значит, замок работает неправильно.` },
+      { q: 'Какое выражение подходит ко всем записям журнала?', opts: [exprHTML('A ИЛИ B'), exprHTML('A И B'), exprHTML('НЕ A'), exprHTML('НЕ B')], hint: 'Проверь каждое выражение на всех трёх строках журнала.', explain: `${exprHTML('A ИЛИ B')} даёт 1, 1, 0 — как в журнале. Но так же ведёт себя и замок, который проверяет только карту (просто A). Данных не хватает, чтобы различить эти варианты.` },
+      { q: 'Какой опыт поможет точно узнать, как работает сломанный замок?', opts: ['Ввести верный код без карты: A = 0, B = 1', 'Приложить карту и ввести верный код', 'Ничего не делать: всё и так понятно'], hint: 'Нужен набор, на котором «ИЛИ» и «только карта» дают разный результат.', explain: 'При A = 0, B = 1 выражение A ИЛИ B даёт 1, а «только карта» даёт 0. Этот решающий опыт различит две гипотезы.' }],
+    discuss: 'Почему одного журнала оказалось мало, чтобы точно найти неисправность? Где в жизни нужен такой «решающий опыт»?' },
+  4: { title: 'Свет, который не гаснет', story: 'Свет в коридоре связи должен гореть, если нажата кнопка у входа (A) ИЛИ кнопка у выхода (B). Сотрудники жалуются: свет горит всегда. Робот снял показания.',
+    data: () => dataTable(['Кнопка у входа (A)', 'Кнопка у выхода (B)', 'Свет']),
+    steps: [
+      { q: `Что должно получиться по формуле ${exprHTML('A ИЛИ B')} при A = 0, B = 0?`, opts: ['Свет не горит (0)', 'Свет горит (1)', 'Зависит от времени суток'], hint: 'Когда ИЛИ даёт 0?', explain: 'ИЛИ ложно только когда оба операнда ложны: 0 ИЛИ 0 = 0. Свет не должен гореть.' },
+      { q: 'Какая гипотеза объясняет неисправность?', opts: ['Кнопка у выхода залипла и всегда даёт 1', 'Кнопка у входа не работает и всегда даёт 0', 'Элемент ИЛИ заменили на И'], hint: 'Проверь каждую гипотезу: что она даст при A = 0, B = 0?', explain: 'Если B всегда 1, то A ИЛИ 1 = 1 при любом A: свет горит всегда. Две другие гипотезы дали бы 0.' },
+      { q: 'Для экономии решили добавить общий рубильник C: свет горит, только если рубильник включён и нажата любая из кнопок. Какое выражение верное?', opts: [exprHTML('C И (A ИЛИ B)'), exprHTML('C И A ИЛИ B'), exprHTML('C ИЛИ A ИЛИ B')], hint: 'Что должно выполниться раньше: И или ИЛИ? Как этого добиться?', explain: `Без скобок ${exprHTML('C И A ИЛИ B')} — это (C И A) ИЛИ B: кнопка B включит свет даже при выключенном рубильнике. Нужны скобки.` }],
+    discuss: 'Как бы вы проверили гипотезу о залипшей кнопке на практике, не разбирая всю схему?' },
+  5: { title: 'Ложная эвакуация', story: 'Программист записал условие сирены: «тревога, если сработал датчик дыма A ИЛИ датчик огня B, и при этом НЕ включён учебный режим C». Во время учений (C = 1) кто-то включил дым-машину, и сирена эвакуировала всю лабораторию.',
+    data: () => `<div class="code-line mono">тревога = ${exprHTML('A ИЛИ B И НЕ C', false)}</div>` + dataTable(['Дым (A)', 'Огонь (B)', 'Учения (C)', 'Сирена'], [[1, 0, 1, 1]]),
+    steps: [
+      { q: `Чему равно ${exprHTML('A ИЛИ B И НЕ C')} при A = 1, B = 0, C = 1?`, opts: ['1: сирена включится', '0: сирена промолчит', 'Выражение нельзя вычислить'], hint: 'Порядок: НЕ, потом И, потом ИЛИ.', explain: `НЕ C = 0; B И 0 = 0; A ИЛИ 0 = 1 ИЛИ 0 = 1. Программа сработала так, как записана.` },
+      { q: 'Почему программа сработала не так, как задумал программист?', opts: ['И выполняется раньше ИЛИ, поэтому учебный режим проверяется только вместе с датчиком B', 'ИЛИ выполняется раньше И', 'Датчик дыма неисправен'], hint: 'Какая операция выполняется последней?', explain: 'Без скобок выражение читается как A ИЛИ (B И НЕ C). Датчику A учебный режим не мешает.' },
+      { q: 'Как правильно записать условие?', opts: [exprHTML('(A ИЛИ B) И НЕ C'), exprHTML('A ИЛИ (B И НЕ C)'), exprHTML('НЕ (A ИЛИ B) И C')], hint: 'Сначала нужно объединить два датчика, а потом проверить режим.', explain: `${exprHTML('(A ИЛИ B) И НЕ C')} при A = 1, B = 0, C = 1 даёт 1 И 0 = 0: во время учений сирена молчит.` }],
+    discuss: 'Какую привычку при записи выражений стоит выработать, чтобы не повторить ошибку программиста?' },
+  6: { title: 'Где прячется вирус', story: 'Вирус «ЛОЖЬ» спрятался на одном из трёх серверов: X, Y или Z. Три охранных бота дали показания. ЛОГОС точно знает: правду говорит ровно один бот.',
+    data: () => dataTable(['Бот', 'Показание'], [['Бот 1', '«Вирус не на сервере X»'], ['Бот 2', '«Вирус на сервере Y»'], ['Бот 3', '«Вирус не на сервере Y»']]),
+    steps: [
+      { q: 'Что можно сказать о показаниях ботов 2 и 3?', opts: ['Они противоречат друг другу: правду говорит ровно один из них', 'Оба говорят правду', 'Бот 1 точно говорит правду'], hint: 'Показание бота 3 — это отрицание показания бота 2.', explain: 'Высказывание и его отрицание не могут быть одновременно истинными или одновременно ложными. Значит, ровно один из ботов 2 и 3 говорит правду.' },
+      { q: 'Где спрятан вирус?', opts: ['На сервере X', 'На сервере Y', 'На сервере Z'], hint: 'Правдивый бот уже среди ботов 2 и 3. Что тогда с ботом 1?', explain: 'Правдивый бот — один из 2 и 3, значит, бот 1 лжёт. «Вирус не на X» ложно, следовательно, вирус на X. Проверка: бот 2 лжёт, бот 3 говорит правду — ровно один.' },
+      { q: 'Как записать показание бота 1, если X — высказывание «вирус на сервере X»?', opts: [exprHTML('НЕ X'), exprHTML('X'), exprHTML('X ИЛИ Y')], hint: '«Не на сервере X» — это отрицание.', explain: `Показание бота 1 — ${exprHTML('НЕ X')}. Мы доказали, что оно ложно, поэтому X истинно.` }],
+    discuss: 'Где ещё в жизни приходится находить правду, когда часть источников ошибается? Как здесь помогает логика?' },
+};
+CASES[3].data = () => dataTable(['Время', 'Карта (A)', 'Верный код (B)', 'Сейф открылся'], [['09:12', 1, 1, 1], ['13:40', 1, 0, 1], ['18:05', 0, 0, 0]]);
+CASES[4].data = () => dataTable(['Кнопка у входа (A)', 'Кнопка у выхода (B)', 'Свет'], [[0, 0, 1], [1, 0, 1], [0, 0, 1]]);
+
 /* ---------- Достижения и ранги ---------- */
 const ACH = [
   { id: 'first', ic: '1', name: 'Первый взлом', d: 'Открыть первый замок' },
@@ -874,6 +1014,7 @@ const ACH = [
   { id: 'nohints', ic: '!', name: 'Своим умом', d: 'Пройти игру без подсказок' },
   { id: 'boss', ic: '✕', name: 'Антивирус', d: 'Победить вирус «ЛОЖЬ»' },
   { id: 'master', ic: '★', name: 'Магистр логики', d: 'Собрать все 18 звёзд' },
+  { id: 'analyst', ic: '⌕', name: 'Аналитик', d: 'Разобрать все 6 кейсов' },
 ];
 const RANKS = [[0, 'Стажёр'], [700, 'Техник'], [1400, 'Инженер'], [2000, 'Логик'], [2500, 'Магистр логики']];
 const rankOf = sc => { let r = RANKS[0], next = null; for (let i = 0; i < RANKS.length; i++) { if (sc >= RANKS[i][0]) { r = RANKS[i]; next = RANKS[i + 1] || null; } } return { name: r[1], from: r[0], next }; };
@@ -891,6 +1032,8 @@ function migrate(st) {
   st.conf ??= { n: 0, ok: 0 };
   st.secErr ??= {};
   st.reflect ??= { mood: null, topic: null };
+  st.storySeen ??= {};
+  st.cases ??= {};
   return st;
 }
 const save = () => { if (S) store.set(SAVE_KEY, S); };
@@ -937,7 +1080,7 @@ function addScore(d, anchor, label) {
 /* ---------- HUD ---------- */
 function hud() {
   const h = $('#hud');
-  if (!S || screen === 'title' || screen === 'intro' || screen === 'teacher') { h.hidden = true; return; }
+  if (!S || screen === 'title' || screen === 'intro' || screen === 'story' || screen === 'teacher') { h.hidden = true; return; }
   h.hidden = false;
   const rk = rankOf(S.score);
   h.innerHTML = `
@@ -1007,31 +1150,44 @@ document.addEventListener('submit', e => {
 
 /* ---------- Экран: вступление ---------- */
 const INTRO = [
-  { who: 'sys', name: 'Система', text: 'ТРЕВОГА. Сбой системы безопасности. Все шлюзы лаборатории заблокированы.' },
-  { who: 'logos', name: 'ЛОГОС, бортовой ИИ', text: 'БИТ-8, ты меня слышишь? Это ЛОГОС. Вирус «ЛОЖЬ» перепрограммировал двери.' },
-  { who: 'logos', name: 'ЛОГОС, бортовой ИИ', text: 'Теперь каждая дверь открывается только верно вычисленным логическим выражением.' },
-  { who: 'bit', name: 'БИТ-8', text: 'Понял. Сколько отсеков до выхода?' },
-  { who: 'logos', name: 'ЛОГОС, бортовой ИИ', text: 'Шесть. В каждом есть терминал с правилами, симулятор и дверь с тремя замками.' },
-  { who: 'logos', name: 'ЛОГОС, бортовой ИИ', text: 'Береги энергию: на отсек даётся 3 заряда. Ошибка стоит заряда и включает тревогу. Кончатся заряды, и замки сбросятся.' },
-  { who: 'bit', name: 'БИТ-8', text: 'Принято. Запускаю логические схемы. Идём к отсеку сканирования!' },
+  { who: 'sys', text: 'ТРЕВОГА. Сбой системы безопасности. Все шлюзы лаборатории заблокированы.' },
+  { who: 'logos', text: 'БИТ-8, ты меня слышишь? Это ЛОГОС. Вирус «ЛОЖЬ» перепрограммировал двери.' },
+  { who: 'logos', text: 'Теперь каждая дверь открывается только верно вычисленным логическим выражением.' },
+  { who: 'bit', text: 'Понял. Сколько отсеков до выхода?' },
+  { who: 'logos', text: 'Шесть. В каждом есть терминал с правилами, симулятор, кейс с реальной ситуацией и дверь с тремя замками.' },
+  { who: 'logos', text: 'Береги энергию: на отсек даётся 3 заряда. Ошибка стоит заряда и включает тревогу. Кончатся заряды, и замки сбросятся.' },
+  { who: 'logos', text: 'И ещё: в архиве остались аудиозаписи профессора Ады Булевой, создательницы лаборатории. Слушай их внимательно.' },
+  { who: 'bit', text: 'Принято. Запускаю логические схемы. Идём к отсеку сканирования!' },
 ];
-let introI = 0, typer = null;
-function renderIntro() { introI = 0; drawIntro(); }
-function drawIntro() {
-  const l = INTRO[introI];
-  const face = l.who === 'logos' ? `<div class="logos-core">ЛОГОС</div>` : l.who === 'sys' ? robot('alarm', 110) : robot('ok', 110);
+let DLG = null, typer = null;
+function renderIntro() { playDialog(INTRO, { done: () => go('map'), last: 'К карте отсеков', eyebrow: 'Пролог', title: 'Сбой системы' }); }
+function playDialog(lines, opts) {
+  DLG = { lines, i: 0, ...opts };
+  screen = 'story'; closeModal(); hud(); drawDialog(); scrollTo({ top: 0 });
+}
+function finishDialog() { clearInterval(typer); const d = DLG; DLG = null; d.done(); }
+function speakerFace(who) {
+  if (who === 'logos') return `<div class="logos-core">ЛОГОС</div>`;
+  if (who === 'prof') return `<div class="prof-core"><b>АБ</b><span class="wave"><i></i><i></i><i></i><i></i><i></i></span></div>`;
+  if (who === 'virus') return `<div class="virus-face">${virusSVG.replace('width="58" height="58"', 'width="110" height="110"')}</div>`;
+  return who === 'sys' ? robot('alarm', 110) : robot('ok', 110);
+}
+function drawDialog() {
+  const d = DLG, l = d.lines[d.i];
   $('#stage').innerHTML = `
     <section class="dialog">
-      <div class="speaker">${face}</div>
+      <div class="speaker">${speakerFace(l.who)}</div>
       <div class="stack">
+        ${d.eyebrow ? `<div class="eyebrow">${d.eyebrow}</div>` : ''}${d.title ? `<h2 class="scene-title">${d.title}</h2>` : ''}
         <div class="bubble ${l.who}" data-act="intro-next" role="button" tabindex="0" aria-label="Дальше">
-          <div class="who">${l.name}</div><div class="txt" id="intro-txt"></div>
-          <div class="eyebrow" style="text-align:right">${introI + 1}/${INTRO.length} · нажми, чтобы продолжить</div>
+          <div class="who">${WHO[l.who]}</div><div class="txt" id="intro-txt"></div>
+          <div class="eyebrow" style="text-align:right">${d.i + 1}/${d.lines.length} · нажми, чтобы продолжить</div>
         </div>
-        <div class="row" style="justify-content:flex-end"><button class="btn ghost small" data-act="intro-skip">Пропустить</button><button class="btn primary" data-act="intro-next">${introI === INTRO.length - 1 ? 'К карте отсеков' : 'Дальше'}</button></div>
+        <div class="row" style="justify-content:flex-end"><button class="btn ghost small" data-act="intro-skip">Пропустить</button><button class="btn primary" data-act="intro-next">${d.i === d.lines.length - 1 ? (d.last || 'Дальше') : 'Дальше'}</button></div>
       </div>
     </section>`;
   if (l.who === 'sys') { alarmFX(); Snd.alarm(); }
+  if (l.who === 'virus') { Snd.tone(110, .25, 'sawtooth', .04); Snd.tone(90, .3, 'sawtooth', .03, .12); }
   typeText($('#intro-txt'), l.text);
 }
 function typeText(el, text) {
@@ -1166,12 +1322,22 @@ function renderMap() {
       <div class="row" style="justify-content:space-between"><h3>Ранг: <span style="color:var(--signal)">${rk.name}</span></h3><span class="dim mono">${rk.next ? `до ранга «${rk.next[1]}»: ${rk.next[0] - S.score} очков` : 'максимальный ранг'}</span></div>
       <div class="progress rank"><i style="width:${pct}%"></i></div>
     </div>
+    ${journalHTML()}
     <div class="stack">
       <div class="row" style="justify-content:space-between"><h3>Достижения</h3><span class="dim mono">${Object.keys(S.ach).length}/${ACH.length}</span></div>
       <div class="ach-grid">${ACH.map(a => `<div class="ach ${S.ach[a.id] ? 'got' : ''}"><span class="ic">${a.ic}</span><span><b>${a.name}</b><span class="dim">${a.d}</span></span></div>`).join('')}</div>
     </div>
   </section>`;
   runMapPlan();
+}
+function journalHTML() {
+  const got = SECTORS.filter(s => S.sectors[s.id]?.done).length;
+  return `<div class="stack">
+    <div class="row" style="justify-content:space-between"><h3>Бортовой журнал</h3><span class="dim mono">${got}/6 записей · кейсов решено: ${SECTORS.filter(s => S.cases[s.id]).length}/6</span></div>
+    <div class="journal">${SECTORS.map(s => S.sectors[s.id]?.done
+      ? `<details class="jentry"><summary><span class="mono dim">Запись ${s.id}</span> <b>${STORY[s.id].log.title}</b></summary><p>${STORY[s.id].log.text}</p></details>`
+      : `<div class="jentry locked"><span class="mono dim">Запись ${s.id}</span> <span class="dim">зашифрована · пройди отсек ${s.id}</span></div>`).join('')}</div>
+  </div>`;
 }
 let lastWide = null;
 addEventListener('resize', () => {
@@ -1193,11 +1359,18 @@ function enterSector(sid) {
   if (sec.sim.kind === 'scan') {
     R.scan = shuffle([...shuffle(STATEMENTS.filter(s => s.k === 'T')).slice(0, 2), ...shuffle(STATEMENTS.filter(s => s.k === 'F')).slice(0, 2), ...shuffle(ST_N).slice(0, 2)]);
   } else { varsOf(sec.sim.src).forEach(v => R.simEnv[v] = 0); R.visited.add(envKey(R.simEnv)); }
-  S.current = sid; save(); go('sector');
+  R.caseStep = 0; R.caseMiss = {}; R.caseWrong = {}; R.caseFb = null;
+  R.caseOpts = CASES[sid].steps.map(st => shuffle(st.opts));
+  S.current = sid; save();
+  if (!R.practice && !S.storySeen[sid]) {
+    S.storySeen[sid] = 1; save();
+    return playDialog(STORY[sid].intro, { done: () => go('sector'), last: 'Войти в отсек →', eyebrow: `Глава ${sid} · ${sec.place}`, title: sec.name });
+  }
+  go('sector');
 }
 function renderSector() {
   const s = R.sec, ph = R.phase;
-  const steps = [['theory', 'Терминал'], ['sim', 'Симулятор'], ['door', 'Дверь']];
+  const steps = [['theory', 'Терминал'], ['sim', 'Симулятор'], ['case', 'Кейс'], ['door', 'Дверь']];
   $('#stage').innerHTML = `
   <section class="stack" style="gap:18px">
     <div class="sec-head">
@@ -1213,7 +1386,7 @@ function renderSector() {
     <div id="phase"></div>
   </section>`;
   R.seen[ph] = true;
-  if (ph === 'theory') renderTheory(); else if (ph === 'sim') renderSim(); else renderDoor();
+  if (ph === 'theory') renderTheory(); else if (ph === 'sim') renderSim(); else if (ph === 'case') renderCase(); else renderDoor();
 }
 function renderTheory() {
   const s = R.sec;
@@ -1260,7 +1433,7 @@ function renderSim() {
         <div class="explore"><span class="eyebrow">Исследовано</span><div class="progress" style="max-width:260px"><i style="width:${got / total * 100}%"></i></div><b class="mono">${got}/${total}</b><span class="dim">${all ? (S.explored[s.id] ? 'Всё изучено, бонус получен.' : '') : 'Бонус +50 за полное исследование'}</span></div>
       </div>
       ${body}
-      <div class="row"><button class="btn primary" data-act="phase" data-phase="door">К двери отсека →</button><button class="btn ghost" data-act="phase" data-phase="theory">← Терминал</button></div>
+      <div class="row"><button class="btn primary" data-act="phase" data-phase="case">К кейсу →</button><button class="btn ghost" data-act="phase" data-phase="door">Сразу к двери</button><button class="btn ghost" data-act="phase" data-phase="theory">← Терминал</button></div>
     </div>`;
 }
 function checkExplored(anchor) {
@@ -1272,6 +1445,49 @@ function checkExplored(anchor) {
     if (SECTORS.every(s => S.explored[s.id])) award('scientist');
     save();
   }
+}
+
+/* --- кейс --- */
+function renderCase() {
+  const c = CASES[R.sid], done = R.caseStep >= c.steps.length;
+  const stepsHTML = c.steps.map((st, i) => {
+    if (i > R.caseStep) return `<div class="case-step locked"><span class="cs-n">${i + 1}</span><span class="dim">Шаг откроется после предыдущего</span></div>`;
+    if (i < R.caseStep) return `<div class="case-step solved"><span class="cs-n">✓</span><div class="stack" style="gap:6px;min-width:0"><b>${st.q}</b><div>Ответ: ${st.opts[0]}</div><div class="dim" style="font-size:14px">${st.explain}</div></div></div>`;
+    return `<div class="case-step cur"><span class="cs-n">${i + 1}</span><div class="stack" style="gap:10px;min-width:0;flex:1"><b>${st.q}</b>
+      ${R.caseFb ? `<div class="feedback ${R.caseFb.cls}"><span class="fh">${R.caseFb.title}</span><div>${R.caseFb.html}</div></div>` : ''}
+      <div class="opts">${R.caseOpts[i].map((o, k) => { const wrong = R.caseWrong[i + ':' + k]; return `<button class="opt ${wrong ? 'struck' : ''}" data-act="case-opt" data-k="${k}" ${wrong ? 'disabled' : ''}><span class="k">${'АБВГ'[k]}</span><span>${o}</span></button>`; }).join('')}</div></div></div>`;
+  }).join('');
+  $('#phase').innerHTML = `
+    <div class="case-layout">
+      <div class="panel stack case-file">
+        <div class="row" style="justify-content:space-between"><span class="tag">КЕЙС · ОТСЕК ${String(R.sid).padStart(2, '0')}</span><span class="dim mono" style="font-size:12px">+30 очков за шаг с первой попытки</span></div>
+        <h3>${c.title}</h3>
+        <div class="row" style="gap:12px;align-items:flex-start;flex-wrap:nowrap"><div class="logos-mini">ЛОГОС</div><p>${c.story}</p></div>
+        <div class="stack" style="gap:8px"><span class="eyebrow">Данные</span>${c.data()}</div>
+        <p class="dim" style="font-size:14px">Ошибка в кейсе не тратит энергию, но стоит 10 очков. Здесь важно рассуждать: читай данные и проверяй каждую гипотезу.</p>
+      </div>
+      <div class="stack">
+        <div class="panel stack"><span class="eyebrow">Анализ · шаг ${Math.min(R.caseStep + 1, c.steps.length)} из ${c.steps.length}</span>${stepsHTML}</div>
+        ${done ? `<div class="panel stack discuss"><span class="eyebrow">Кейс решён · вопрос для обсуждения в классе</span><p style="font-size:17px">${c.discuss}</p><div class="row"><button class="btn primary" data-act="phase" data-phase="door">К двери отсека →</button></div></div>` : `<div class="row"><button class="btn ghost" data-act="phase" data-phase="door">Пропустить кейс и идти к двери</button></div>`}
+      </div>
+    </div>`;
+}
+function caseAnswer(el) {
+  const c = CASES[R.sid], i = R.caseStep, k = +el.dataset.k, st = c.steps[i];
+  if (R.caseOpts[i][k] === st.opts[0]) {
+    if (!R.caseMiss[i]) addScore(30, el); else Snd.ok();
+    if (!R.caseMiss[i]) Snd.ok();
+    R.caseStep++; R.caseFb = null;
+    if (R.caseStep >= c.steps.length && !S.cases[R.sid]) {
+      S.cases[R.sid] = true; save(); Snd.bonus();
+      if (SECTORS.every(x => S.cases[x.id])) award('analyst');
+    }
+  } else {
+    R.caseMiss[i] = true; R.caseWrong[i + ':' + k] = true;
+    addScore(-10, el); Snd.bad();
+    R.caseFb = { cls: 'hint', title: 'Гипотеза не подтвердилась · −10 очков', html: st.hint };
+  }
+  renderCase();
 }
 
 /* --- дверь --- */
@@ -1420,8 +1636,8 @@ function completeSector() {
     save(); hud();
   }
   Snd.win();
-  const last = sid === 6;
-  showModal(`
+  const last = sid === 6, story = !R.practice && STORY[sid];
+  const showDone = () => showModal(`
     <div class="stack" style="align-items:center;text-align:center;gap:10px">
       <div class="eyebrow">${R.practice ? 'Тренировка завершена' : `Отсек ${String(sid).padStart(2, '0')} пройден`}</div>
       <h2>${last ? 'Вирус «ЛОЖЬ» уничтожен!' : R.sec.name + ': дверь открыта'}</h2>
@@ -1435,10 +1651,13 @@ function completeSector() {
       <div><b>${R.overloads}</b><span>перегрузок</span></div>
     </div>
     ${R.practice ? '<p class="dim">В режиме тренировки очки и звёзды не меняются.</p>' : ''}
+    ${story ? `<div class="journal-new"><span class="eyebrow">Новая запись в бортовом журнале</span><b>${story.log.title}</b><span class="dim" style="font-size:14px">${story.log.text}</span></div>` : ''}
     <div class="row" style="justify-content:center">
       ${last && !R.practice ? `<button class="btn primary" data-act="escape" data-autofocus>Выйти на свободу →</button>` : !last ? `<button class="btn primary" data-act="next-sector" data-autofocus>Отсек ${String(sid + 1).padStart(2, '0')} →</button>` : ''}
       <button class="btn ghost" data-act="map">На карту</button>
     </div>`, 'win');
+  if (story) playDialog(story.outro, { done: () => { screen = 'sector'; hud(); renderSector(); showDone(); }, last: 'Дальше', eyebrow: `Глава ${sid} · развязка`, title: CASES[sid] && R.sec.name });
+  else showDone();
 }
 
 /* ---------- Финал ---------- */
@@ -1449,7 +1668,7 @@ function resultCode() {
   const d = new Date(S.finishedAt || Date.now());
   const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const p = [2, S.name, S.cls, S.score, S.errors, S.hints, S.elapsed, SECTORS.map(s => S.sectors[s.id]?.stars || 0).join(''), S.bestStreak, Object.keys(S.ach).length, date,
-    SECTORS.map(s => Math.min(9, S.secErr[s.id] || 0)).join(''), S.conf.n, S.conf.ok, S.reflect.mood ?? '', S.reflect.topic ?? ''].join('~');
+    SECTORS.map(s => Math.min(9, S.secErr[s.id] || 0)).join(''), S.conf.n, S.conf.ok, S.reflect.mood ?? '', S.reflect.topic ?? '', SECTORS.filter(s => S.cases[s.id]).length].join('~');
   return `LAB-${hash(p)}-${b64e(p)}`;
 }
 function decodeCode(code) {
@@ -1460,7 +1679,7 @@ function decodeCode(code) {
   if (hash(p) !== m[1]) return { err: 'Контрольная сумма не совпадает: код изменён или скопирован не полностью.' };
   const f = p.split('~');
   const d = { name: f[1], cls: f[2], score: +f[3], errors: +f[4], hints: +f[5], elapsed: +f[6], stars: f[7].split('').map(Number), best: +f[8], ach: +f[9], date: f[10] };
-  if (f[0] === '2') Object.assign(d, { secErr: f[11].split('').map(Number), confN: +f[12], confOk: +f[13], mood: f[14], topic: f[15] });
+  if (f[0] === '2') Object.assign(d, { secErr: f[11].split('').map(Number), confN: +f[12], confOk: +f[13], mood: f[14], topic: f[15], cases: f[16] === undefined ? null : +f[16] });
   return d;
 }
 const MOODS = { g: ['Всё понятно', 'var(--true)'], y: ['Остались вопросы', 'var(--signal)'], r: ['Было трудно', 'var(--alarm)'] };
@@ -1491,7 +1710,7 @@ function renderFinale() {
       <div class="float">${robot('happy', 170)}</div>
       <div class="eyebrow">Миссия выполнена</div>
       <h2>БИТ-8 на свободе!</h2>
-      <p>ЛОГОС: «Все шлюзы под контролем, вирус удалён. Отличная логика, ${esc(S.name)}!»</p>
+      <p>Профессор Булева: «Испытание пройдено. Ты доказал, что любую ложь можно разоблачить проверкой. Отличная логика, ${esc(S.name)}!»</p>
       <div class="big-stars">${[0, 1, 2].map(i => starSVG(i < ov)).join('')}</div>
       <p class="dim">Итоговая оценка: ${ov} ${ov === 1 ? 'звезда' : 'звезды'} (${starTotal()} из 18 звёзд по отсекам)</p>
     </div>
@@ -1504,9 +1723,11 @@ function renderFinale() {
         <div><b>×${S.bestStreak}</b><span>лучшая серия</span></div>
         <div><b style="font-size:16px;line-height:1.7">${rk.name}</b><span>ранг</span></div>
         <div><b>${S.conf.n ? Math.round(S.conf.ok / S.conf.n * 100) + '%' : '—'}</b><span>точность ставок</span></div>
+        <div><b>${SECTORS.filter(s => S.cases[s.id]).length}/6</b><span>кейсов решено</span></div>
       </div>
       <div class="sector-stars">${SECTORS.map(s => `<div>S-0${s.id}<br>${starsHTML(S.sectors[s.id]?.stars || 0)}</div>`).join('')}</div>
       ${reflectHTML()}
+      ${journalHTML()}
       <div class="panel stack">
         <h3>Код результата для учителя</h3>
         <p class="dim" style="font-size:14px">Скопируй код и отправь учителю. По нему учитель увидит очки, ошибки по темам, время, звёзды и твою рефлексию. Изменить код незаметно не получится: в нём есть контрольная сумма.</p>
@@ -1559,6 +1780,8 @@ function renderTeacher() {
           <tr><td>5</td><td>Порядок выполнения операций</td><td>выбор ответа · истина/ложь · конструктор выражений</td></tr>
           <tr><td>6</td><td>Финальный шлюз (босс): сложные выражения</td><td>таблица истинности · пульт на 3 лампы · подбор значения X</td></tr>
         </tbody></table></div>
+      <p class="dim" style="font-size:14px"><b>Сторителлинг.</b> Каждый отсек — глава истории: сцена в начале, развязка в конце и запись в бортовом журнале с реальным фактом из истории логики (Аристотель, Буль, Шеннон). В финале раскрывается тайна вируса.</p>
+      <p class="dim" style="font-size:14px"><b>Кейс-метод.</b> В каждом отсеке есть кейс: реальная ситуация с данными (журналы, показания датчиков), три шага анализа и вопрос для обсуждения в классе. Кейсы удобно разбирать в парах или группах.</p>
       <p class="dim" style="font-size:14px">Задания генерируются случайно: у каждого ученика свои значения переменных и выражения, а после ошибки замок меняет задание. Списать ответ у соседа не получится.</p>
     </div>
     <div class="panel stack">
@@ -1580,7 +1803,9 @@ function showRules() {
     <div class="eyebrow">Инструкция ЛОГОСа</div><h2>Как играть</h2>
     <ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px">
       <li><b>Карта.</b> Нажми на отсек, и робот дойдёт до него по коридорам. Шлюз между отсеками открывается, когда пройден предыдущий.</li>
-      <li><b>Отсек</b> проходится в три этапа: терминал с теорией → симулятор с логической схемой → дверь с тремя замками.</li>
+      <li><b>Отсек</b> — это глава истории. Этапы: терминал с теорией → симулятор с логической схемой → кейс → дверь с тремя замками.</li>
+      <li><b>Кейс.</b> Реальная ситуация с данными: найди причину сбоя и предложи решение. +30 очков за шаг с первой попытки, ошибка −10 очков, энергия не тратится.</li>
+      <li><b>Бортовой журнал.</b> За каждый пройденный отсек открывается запись из архива профессора Булевой.</li>
       <li><b>Энергия.</b> В каждом отсеке 3 заряда. Ошибка тратит заряд и включает тревогу. При 0 зарядов замки сбрасываются и меняют коды.</li>
       <li><b>Очки.</b> +100 за замок, −25 за ошибку, −20 за подсказку, +50 за полное исследование симулятора.</li>
       <li><b>Ставка уверенности.</b> Перед ответом можно включить ставку: верный ответ даст +200 вместо +100, ошибка стоит −50.</li>
@@ -1602,8 +1827,8 @@ const ACT = {
   'reset-yes': () => { store.del(SAVE_KEY); S = null; R = null; go('title'); },
   'teacher': () => go('teacher'),
   'title': () => go('title'),
-  'intro-next': () => { const t = $('#intro-txt'); if (t && !t.dataset.done) { clearInterval(typer); t.textContent = INTRO[introI].text; t.dataset.done = '1'; return; } introI++; if (introI >= INTRO.length) return go('map'); drawIntro(); },
-  'intro-skip': () => { clearInterval(typer); go('map'); },
+  'intro-next': () => { if (!DLG) return; const t = $('#intro-txt'); if (t && !t.dataset.done) { clearInterval(typer); t.textContent = DLG.lines[DLG.i].text; t.dataset.done = '1'; return; } DLG.i++; if (DLG.i >= DLG.lines.length) return finishDialog(); drawDialog(); },
+  'intro-skip': () => { if (DLG) finishDialog(); },
   'map': () => { R = null; go('map'); },
   'rules': () => showRules(),
   'sound': () => { Snd.on = !Snd.on; if (S) { S.sound = Snd.on; save(); } hud(); },
@@ -1650,6 +1875,7 @@ const ACT = {
     }
   },
   'hint': el => { const t = R.locks[R.active]; if (t.hintShown) return; t.hintShown = true; R.hints++; if (!R.practice) S.hints++; addScore(-20, el); Snd.tone(440, .15, 'triangle', .05); renderTask(); },
+  'case-opt': el => caseAnswer(el),
   'next-lock': () => { R.bet = false; R.active = R.opened.findIndex(o => !o); R.solved = false; R.feedback = null; renderDoorBox(); renderTask(); },
   'open-door': () => openDoor(),
   'theory-modal': () => showModal(`<div class="eyebrow">Терминал отсека ${R.sid}</div><h2>${R.sec.name}</h2><div class="stack">${THEORY[R.sid]()}</div><div class="row"><button class="btn primary" data-act="close-modal">Вернуться к двери</button></div>`, 'wide'),
@@ -1678,6 +1904,7 @@ const ACT = {
         <tr><td>Лучшая серия / достижения</td><td class="mono">×${d.best} / ${d.ach} из ${ACH.length}</td></tr>
         ${d.secErr ? `<tr><td>Ошибки по отсекам (карта трудностей)</td><td><div class="heat">${d.secErr.map((e, i) => `<span style="--a:${Math.min(1, e / 4)}" title="Отсек ${i + 1}: ${SECTORS[i].name}"><b>${i + 1}</b>${e}</span>`).join('')}</div></td></tr>
         <tr><td>Ставки уверенности</td><td class="mono">${d.confN ? `${d.confOk} из ${d.confN} верно (${Math.round(d.confOk / d.confN * 100)}%)` : 'не делал'}</td></tr>
+        ${d.cases !== null ? `<tr><td>Решено кейсов</td><td class="mono">${d.cases} из 6</td></tr>` : ''}
         <tr><td>Самооценка</td><td>${d.mood && MOODS[d.mood] ? `<span style="color:${MOODS[d.mood][1]}">●</span> ${MOODS[d.mood][0]}` : 'не указана'}</td></tr>
         <tr><td>Самый трудный отсек (по мнению ученика)</td><td>${TOPIC_NAME(d.topic)}</td></tr>` : ''}
       </tbody></table><p style="color:var(--true)">Код подлинный: контрольная сумма совпала.</p></div>`;
